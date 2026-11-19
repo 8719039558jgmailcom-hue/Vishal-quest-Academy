@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { AvatarId } from '../types/quiz';
+import {
+  applyStudioEnvironment,
+  createSimulationTimer,
+  createStudioRenderer,
+  detectSoftwareWebGL,
+  disposeObjectHierarchy,
+} from '../utils/threeHelpers';
 import { createRealisticHeroRig } from '../utils/threeMapAssets';
 
 interface Avatar3DPreviewProps {
@@ -18,28 +24,11 @@ export function Avatar3DPreview({ avatarId, heroName }: Avatar3DPreviewProps) {
     const container = mountRef.current;
     if (!container) return;
 
-    const isSoftwareGl = (() => {
-      try {
-        const probe = document.createElement('canvas');
-        const gl = probe.getContext('webgl2');
-        if (!gl) return true;
-        const ext = gl.getExtension('WEBGL_debug_renderer_info');
-        const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
-        const gpu = String(gl.getParameter(param) ?? '');
-        gl.getExtension('WEBGL_lose_context')?.loseContext();
-        return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
-      } catch {
-        return true;
-      }
-    })();
+    const isSoftwareGl = detectSoftwareWebGL();
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: !isSoftwareGl,
-        alpha: true,
-        powerPreference: 'high-performance',
-      });
+      renderer = createStudioRenderer(isSoftwareGl, { alpha: true, exposure: 1.12 });
     } catch {
       setWebglError(true);
       return;
@@ -48,26 +37,23 @@ export function Avatar3DPreview({ avatarId, heroName }: Avatar3DPreviewProps) {
     const width = Math.max(220, container.clientWidth);
     const height = Math.max(220, container.clientHeight);
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
-    renderer.shadowMap.enabled = !isSoftwareGl;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.domElement.style.display = 'block';
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
 
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
-    const scene = new THREE.Scene();
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
-    pmrem.dispose();
+    const onContextLost = (e: Event) => {
+      e.preventDefault();
+      setWebglError(true);
+    };
+    const onContextRestored = () => {
+      setWebglError(false);
+    };
+    renderer.domElement.addEventListener('webglcontextlost', onContextLost);
+    renderer.domElement.addEventListener('webglcontextrestored', onContextRestored);
 
-    const disposables: Array<{ dispose: () => void }> = [envTex];
+    const scene = new THREE.Scene();
+    const disposables: Array<{ dispose: () => void }> = [];
+    applyStudioEnvironment(renderer, scene, disposables);
 
     const camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 40);
     camera.position.set(0.45, 1.52, 3.35);
@@ -148,11 +134,11 @@ export function Avatar3DPreview({ avatarId, heroName }: Avatar3DPreviewProps) {
       renderer.compile(scene, camera);
     }
 
-    const clock = new THREE.Clock();
+    const timer = createSimulationTimer();
     let frameId = 0;
     let disposed = false;
 
-    const afterDraw = (cb: () => void) => {
+    const afterDraw = (cb: (ts?: number) => void) => {
       if (disposed) return;
       try {
         const gl = renderer.getContext() as WebGL2RenderingContext;
@@ -165,19 +151,20 @@ export function Avatar3DPreview({ avatarId, heroName }: Avatar3DPreviewProps) {
             frameId = window.setTimeout(poll, 5);
           } else {
             if (sync) gl.deleteSync(sync);
-            frameId = window.setTimeout(cb, 80);
+            frameId = window.setTimeout(() => cb(), 80);
           }
         };
         frameId = window.setTimeout(poll, 5);
       } catch {
-        frameId = window.setTimeout(cb, 80);
+        frameId = window.setTimeout(() => cb(), 80);
       }
     };
 
-    const tick = () => {
+    const tick = (timestamp?: number) => {
       if (disposed) return;
-      const delta = Math.min(0.08, clock.getDelta());
-      const elapsed = clock.getElapsedTime();
+      timer.update(timestamp);
+      const delta = timer.getDelta();
+      const elapsed = timer.getElapsed();
 
       if (!userDragging) {
         heroRig.root.rotation.y += delta * 0.45;
@@ -211,17 +198,14 @@ export function Avatar3DPreview({ avatarId, heroName }: Avatar3DPreviewProps) {
       disposed = true;
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
+      timer.dispose();
       resizeObserver.disconnect();
       controls.removeEventListener('start', onStart);
       controls.removeEventListener('end', onEnd);
       controls.dispose();
-      heroRig.root.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          obj.geometry.dispose();
-          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
-          else obj.material.dispose();
-        }
-      });
+      renderer.domElement.removeEventListener('webglcontextlost', onContextLost);
+      renderer.domElement.removeEventListener('webglcontextrestored', onContextRestored);
+      disposeObjectHierarchy(heroRig.root);
       disposables.forEach((d) => d.dispose());
       renderer.dispose();
       container.innerHTML = '';

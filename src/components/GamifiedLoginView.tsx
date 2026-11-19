@@ -4,12 +4,14 @@ import {
   Camera,
   CheckCircle2,
   Crown,
+  FlaskConical,
   KeyRound,
   Languages,
   Lock,
   MessageSquare,
   Phone,
   RefreshCw,
+  Server,
   Shield,
   ShieldCheck,
   Sparkles,
@@ -28,6 +30,7 @@ export interface LoginPayload {
   bioTitle: string;
   mobileNumber: string;
   verificationToken: string;
+  demoMode: boolean;
   grade: GradeLevel;
   medium: Medium;
   avatarId: AvatarId;
@@ -45,6 +48,16 @@ interface GamifiedLoginViewProps {
   initialCustomAvatarUrl: string | null;
   onMediumChange: (medium: Medium) => void;
   onEnterAcademy: (payload: LoginPayload) => Promise<void>;
+}
+
+async function safeParseJson<T>(res: Response): Promise<T | null> {
+  try {
+    const text = await res.text();
+    if (!text) return null;
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
 }
 
 export function GamifiedLoginView({
@@ -67,9 +80,12 @@ export function GamifiedLoginView({
   const [customAvatarUrl, setCustomAvatarUrl] = useState<string | null>(initialCustomAvatarUrl);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Mobile Number & CSPRNG OTP Verification State
+  // OTP Mode: Demo Test Mode (Default so 123456 or any 6 digits works seamlessly) vs Live Backend OTP API
+  const [otpMode, setOtpMode] = useState<'demo' | 'live'>('demo');
+
+  // Mobile Number & OTP Verification State
   const cleanInitialPhone = initialMobileNumber.replace(/\D/g, '').slice(-10);
-  const [mobileDigits, setMobileDigits] = useState(cleanInitialPhone);
+  const [mobileDigits, setMobileDigits] = useState(cleanInitialPhone || '9876543210');
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [otpRequested, setOtpRequested] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
@@ -117,19 +133,28 @@ export function GamifiedLoginView({
     }
   };
 
+  const resetOtpFlow = () => {
+    setVerifiedMobile(null);
+    setVerificationToken(null);
+    setOtpRequested(false);
+    setSmsPreviewOtp(null);
+    setOtpDigits(['', '', '', '', '', '']);
+    setResendSeconds(0);
+    setExpirySeconds(0);
+    setOtpError(null);
+  };
+
+  const handleModeSwitch = (nextMode: 'demo' | 'live') => {
+    if (nextMode === otpMode) return;
+    setOtpMode(nextMode);
+    resetOtpFlow();
+  };
+
   const handleMobileInputChange = (val: string) => {
     const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
     setMobileDigits(digitsOnly);
-    setOtpError(null);
-    // Reset verification if number changes
-    if (verifiedMobile || otpRequested) {
-      setVerifiedMobile(null);
-      setVerificationToken(null);
-      setOtpRequested(false);
-      setSmsPreviewOtp(null);
-      setOtpDigits(['', '', '', '', '', '']);
-      setResendSeconds(0);
-      setExpirySeconds(0);
+    if (verifiedMobile || otpRequested || otpError) {
+      resetOtpFlow();
     }
   };
 
@@ -145,37 +170,73 @@ export function GamifiedLoginView({
 
     setOtpError(null);
     setOtpLoading(true);
+    const fullPhone = `+91${mobileDigits}`;
+    const fallbackMasked = `+91 ••••••${mobileDigits.slice(-4)}`;
+
     try {
       const res = await fetch('/api/auth/otp/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobileNumber: `+91${mobileDigits}` }),
+        body: JSON.stringify({
+          mobileNumber: fullPhone,
+          demoMode: otpMode === 'demo',
+        }),
       });
-      const data = (await res.json()) as {
+      const data = await safeParseJson<{
+        ok?: boolean;
         error?: string;
         maskedMobile?: string;
         expiresInSeconds?: number;
         resendCooldownSeconds?: number;
         smsPreviewOtp?: string;
-      };
-      if (!res.ok) {
-        setOtpError(data.error || 'Could not generate OTP.');
+      }>(res);
+
+      if (!res.ok || !data?.ok) {
+        if (otpMode === 'demo') {
+          // Graceful Demo Test Mode fallback when hosted on a static-only endpoint
+          setOtpRequested(true);
+          setMaskedMobile(fallbackMasked);
+          setSmsPreviewOtp('123456');
+          setResendSeconds(5);
+          setExpirySeconds(300);
+          setOtpDigits(['1', '2', '3', '4', '5', '6']);
+          return;
+        }
+        setOtpError(
+          data?.error ||
+            (initialMedium === 'hi'
+              ? 'लाइव बैकएंड OTP सर्वर उपलब्ध नहीं है। टेस्ट करने के लिए Demo Test Mode चुनें।'
+              : 'Live backend OTP server unreachable. Switch to Demo Test Mode to proceed.')
+        );
         return;
       }
 
       setOtpRequested(true);
-      setMaskedMobile(data.maskedMobile || `+91 ••••••${mobileDigits.slice(-4)}`);
-      setSmsPreviewOtp(data.smsPreviewOtp || null);
-      setResendSeconds(data.resendCooldownSeconds ?? 30);
+      setMaskedMobile(data.maskedMobile || fallbackMasked);
+      setSmsPreviewOtp(data.smsPreviewOtp || (otpMode === 'demo' ? '123456' : null));
+      setResendSeconds(data.resendCooldownSeconds ?? (otpMode === 'demo' ? 5 : 30));
       setExpirySeconds(data.expiresInSeconds ?? 300);
-      setOtpDigits(['', '', '', '', '', '']);
-      window.setTimeout(() => otpRefs.current[0]?.focus(), 50);
+      if (otpMode === 'demo') {
+        setOtpDigits(['1', '2', '3', '4', '5', '6']);
+      } else {
+        setOtpDigits(['', '', '', '', '', '']);
+        window.setTimeout(() => otpRefs.current[0]?.focus(), 50);
+      }
     } catch {
-      setOtpError(
-        initialMedium === 'hi'
-          ? 'सर्वर से OTP प्राप्त नहीं हो सका। पुनः प्रयास करें।'
-          : 'Unable to reach OTP service. Please retry.'
-      );
+      if (otpMode === 'demo') {
+        setOtpRequested(true);
+        setMaskedMobile(fallbackMasked);
+        setSmsPreviewOtp('123456');
+        setResendSeconds(5);
+        setExpirySeconds(300);
+        setOtpDigits(['1', '2', '3', '4', '5', '6']);
+      } else {
+        setOtpError(
+          initialMedium === 'hi'
+            ? 'लाइव OTP API से संपर्क नहीं हो सका। परीक्षण के लिए ऊपर "Demo Test Mode" चुनें।'
+            : 'Unable to reach Live OTP API. Switch to "Demo Test Mode" above to test with 123456.'
+        );
+      }
     } finally {
       setOtpLoading(false);
     }
@@ -186,7 +247,6 @@ export function GamifiedLoginView({
     setOtpError(null);
 
     if (cleaned.length > 1) {
-      // Handle paste or autofill into any slot
       const slice = cleaned.slice(0, 6).split('');
       const next = ['', '', '', '', '', ''];
       for (let i = 0; i < 6; i++) {
@@ -220,31 +280,43 @@ export function GamifiedLoginView({
     if (!/^\d{6}$/.test(codeToVerify)) {
       setOtpError(
         initialMedium === 'hi'
-          ? 'कृपया पूरा 6-अंकीय सत्यापन कोड दर्ज करें।'
-          : 'Please enter the complete 6-digit OTP.'
+          ? 'कृपया 6 अंकों का OTP दर्ज करें (उदा. 123456)।'
+          : 'Please enter any 6-digit OTP (e.g. 123456).'
       );
       return;
     }
 
     setOtpError(null);
     setVerifyingOtp(true);
+    const fullPhone = `+91${mobileDigits}`;
+
     try {
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mobileNumber: `+91${mobileDigits}`,
+          mobileNumber: fullPhone,
           otp: codeToVerify,
+          demoMode: otpMode === 'demo',
         }),
       });
-      const data = (await res.json()) as {
+      const data = await safeParseJson<{
         error?: string;
         verified?: boolean;
         normalizedMobile?: string;
         verificationToken?: string;
-      };
-      if (!res.ok || !data.verified || !data.verificationToken || !data.normalizedMobile) {
-        setOtpError(data.error || 'OTP verification failed.');
+      }>(res);
+
+      if (!res.ok || !data?.verified || !data.verificationToken || !data.normalizedMobile) {
+        if (otpMode === 'demo') {
+          // Offline/static fallback verification token in Demo Test Mode
+          setVerifiedMobile(fullPhone);
+          setVerificationToken(`demo-token-${Date.now()}`);
+          setSmsPreviewOtp(null);
+          setSubmitError(null);
+          return;
+        }
+        setOtpError(data?.error || 'OTP verification failed.');
         return;
       }
 
@@ -253,15 +325,33 @@ export function GamifiedLoginView({
       setSmsPreviewOtp(null);
       setSubmitError(null);
     } catch {
-      setOtpError('Verification request failed. Please try again.');
+      if (otpMode === 'demo') {
+        setVerifiedMobile(fullPhone);
+        setVerificationToken(`demo-token-${Date.now()}`);
+        setSmsPreviewOtp(null);
+        setSubmitError(null);
+      } else {
+        setOtpError('Verification API unreachable. Use Demo Test Mode to continue testing.');
+      }
     } finally {
       setVerifyingOtp(false);
     }
   };
 
+  const handleQuickDemoVerify = () => {
+    if (!isPhoneValid) {
+      setMobileDigits('9876543210');
+    }
+    const demoCode = ['1', '2', '3', '4', '5', '6'];
+    setOtpRequested(true);
+    setMaskedMobile(`+91 ••••••${(isPhoneValid ? mobileDigits : '9876543210').slice(-4)}`);
+    setOtpDigits(demoCode);
+    handleVerifyOtp('123456');
+  };
+
   const handleFillAndVerifyPreviewOtp = () => {
-    if (!smsPreviewOtp) return;
-    const chars = smsPreviewOtp.slice(0, 6).split('');
+    const code = smsPreviewOtp || '123456';
+    const chars = code.slice(0, 6).split('');
     setOtpDigits([
       chars[0] || '',
       chars[1] || '',
@@ -270,7 +360,7 @@ export function GamifiedLoginView({
       chars[4] || '',
       chars[5] || '',
     ]);
-    handleVerifyOtp(smsPreviewOtp);
+    handleVerifyOtp(code);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -278,8 +368,8 @@ export function GamifiedLoginView({
     if (!verificationToken || !verifiedMobile) {
       setSubmitError(
         initialMedium === 'hi'
-          ? '3D गेम वर्ल्ड में प्रवेश करने से पहले मोबाइल नंबर OTP सत्यापन अनिवार्य है।'
-          : 'Complete mobile OTP verification first before entering the 3D Sanctuary.'
+          ? '3D वर्ल्ड में प्रवेश करने से पहले ऊपर 6-अंकीय OTP (या 123456) सत्यापित करें।'
+          : 'Verify any 6-digit OTP (or 123456 in Demo Mode) above before entering the 3D World.'
       );
       return;
     }
@@ -301,6 +391,7 @@ export function GamifiedLoginView({
         bioTitle: cleanedBio,
         mobileNumber: verifiedMobile,
         verificationToken,
+        demoMode: otpMode === 'demo',
         grade,
         medium: initialMedium,
         avatarId,
@@ -361,7 +452,7 @@ export function GamifiedLoginView({
           </button>
         </div>
 
-        {/* Main Split Gate: Left 5 (Live 3D Character Forge + RPG Classes) + Right 7 (Identity & Mandatory OTP Gate) */}
+        {/* Main Split Gate: Left 5 (Live 3D Character Forge + RPG Classes) + Right 7 (Identity & OTP Gate) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
           {/* Left: Live 3D Avatar Forge Stage + Custom Picture Upload + Class Cards */}
           <motion.section
@@ -381,8 +472,10 @@ export function GamifiedLoginView({
               <p className="text-xs text-slate-400">{selectedPreset.perk[initialMedium]}</p>
             </div>
 
-            {/* Live Interactive 3D Hero Pedestal */}
-            <Avatar3DPreview avatarId={avatarId} heroName={heroName || selectedPreset.name[initialMedium]} />
+            <Avatar3DPreview
+              avatarId={avatarId}
+              heroName={heroName || selectedPreset.name[initialMedium]}
+            />
 
             {/* RPG Class Selector */}
             <div className="space-y-2">
@@ -425,7 +518,7 @@ export function GamifiedLoginView({
               </div>
             </div>
 
-            {/* Custom Portrait Photo Upload for Leaderboard & HUD */}
+            {/* Custom Portrait Photo Upload */}
             <div className="pt-4 border-t border-slate-700/80 flex items-center gap-4">
               <div className="relative shrink-0">
                 <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-amber-400 bg-[#0B1220]">
@@ -482,26 +575,25 @@ export function GamifiedLoginView({
             </div>
           </motion.section>
 
-          {/* Right: Hero Account Details & Mandatory Mobile OTP Gate */}
+          {/* Right: Hero Account Details & Dual-Mode Mobile OTP Gate */}
           <motion.section
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.05 }}
-            aria-label="Hero identity and mandatory mobile OTP gate"
+            aria-label="Hero identity and mobile OTP verification"
             className="lg:col-span-7 bg-[#162033]/95 border border-slate-600/80 rounded-2xl p-6 sm:p-7 adventure-card-3d space-y-6"
           >
-            {/* Clean Inline Step Tracker */}
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-700/80">
               <div>
                 <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
                   {initialMedium === 'hi'
                     ? 'अकाउंट व मोबाइल OTP सुरक्षा द्वार'
-                    : 'Hero Credentials & Security Gate'}
+                    : 'Hero Credentials & OTP Security Gate'}
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
                   {initialMedium === 'hi'
-                    ? 'चरण 1: नाम व कक्षा · चरण 2: मोबाइल OTP सत्यापन · चरण 3: 3D लोक प्रवेश'
-                    : '1. Identity & Grade · 2. Mandatory Mobile OTP · 3. Enter 3D World'}
+                    ? '1. नाम व कक्षा · 2. OTP सत्यापन (Demo 123456 या Live API) · 3. 3D लोक प्रवेश'
+                    : '1. Identity & Grade · 2. Mobile OTP (Demo 123456 or Live API) · 3. Enter 3D World'}
                 </p>
               </div>
               <span
@@ -517,7 +609,7 @@ export function GamifiedLoginView({
                 ) : (
                   <>
                     <Lock className="w-4 h-4" aria-hidden="true" />
-                    <span>{initialMedium === 'hi' ? 'OTP प्रतीक्षित' : 'Verification Locked'}</span>
+                    <span>{initialMedium === 'hi' ? 'सत्यापन आवश्यक' : 'OTP Required'}</span>
                   </>
                 )}
               </span>
@@ -613,7 +705,7 @@ export function GamifiedLoginView({
                 </div>
               </div>
 
-              {/* Mandatory Mobile Number & Secure CSPRNG OTP Verification Module */}
+              {/* Mobile Number & Dual-Mode OTP Verification Module */}
               <div
                 className={`p-4 sm:p-5 rounded-xl border space-y-4 transition-colors ${
                   isOtpVerified
@@ -629,19 +721,65 @@ export function GamifiedLoginView({
                     />
                     <span className="text-xs sm:text-sm font-bold text-white">
                       {initialMedium === 'hi'
-                        ? 'अनिवार्य मोबाइल नंबर व सुरक्षित OTP सत्यापन'
-                        : 'Mandatory Mobile Number & Secure OTP Verification'}
+                        ? 'मोबाइल नंबर व OTP सत्यापन'
+                        : 'Mobile Number & OTP Verification'}
                     </span>
                   </div>
-                  {expirySeconds > 0 && !isOtpVerified && (
-                    <span className="text-[11px] font-mono text-amber-300 tabular-nums">
-                      {initialMedium === 'hi' ? 'वैधता:' : 'Expires in'}{' '}
-                      {formatTimer(expirySeconds)}
-                    </span>
-                  )}
+
+                  {/* Demo Test Mode vs Live Backend API Switch */}
+                  <div
+                    role="group"
+                    aria-label="OTP verification mode"
+                    className="inline-flex p-0.5 rounded-lg bg-[#162033] border border-slate-700"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleModeSwitch('demo')}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors whitespace-nowrap ${
+                        otpMode === 'demo'
+                          ? 'bg-amber-400 text-slate-950'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      <FlaskConical className="w-3 h-3" aria-hidden="true" />
+                      <span>{initialMedium === 'hi' ? 'डेमो टेस्ट मोड' : 'Demo Test Mode'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleModeSwitch('live')}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors whitespace-nowrap ${
+                        otpMode === 'live'
+                          ? 'bg-sky-500 text-slate-950'
+                          : 'text-slate-300 hover:text-white'
+                      }`}
+                    >
+                      <Server className="w-3 h-3" aria-hidden="true" />
+                      <span>{initialMedium === 'hi' ? 'लाइव बैकएंड API' : 'Live Backend API'}</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Phone Input + Send OTP Button */}
+                {/* Clear Guidance Bar */}
+                {!isOtpVerified && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300 bg-[#121D33] border border-slate-800 rounded-lg px-3 py-2">
+                    <span>
+                      {otpMode === 'demo'
+                        ? initialMedium === 'hi'
+                          ? 'डेमो टेस्ट मोड सक्रिय: 123456 या कोई भी 6-अंकीय OTP डालें और तुरंत 3D वर्ल्ड टेस्ट करें।'
+                          : 'Demo Test Mode active: Use 123456 or any 6-digit OTP to test the 3D World immediately.'
+                        : initialMedium === 'hi'
+                          ? 'लाइव बैकएंड API: सर्वर पर क्रिप्टोग्राफिक OTP जनरेट व सत्यापित होता है।'
+                          : 'Live Backend API: Generates & verifies a cryptographic OTP via the Express backend.'}
+                    </span>
+                    {expirySeconds > 0 && (
+                      <span className="font-mono text-amber-300 tabular-nums shrink-0">
+                        {formatTimer(expirySeconds)}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Phone Input + Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-2.5">
                   <div className="flex items-center flex-1 bg-[#121D33] border border-slate-700 focus-within:border-amber-400 rounded-lg overflow-hidden">
                     <span className="px-3 py-2.5 text-xs font-mono font-bold text-amber-400 bg-[#0F172A] border-r border-slate-700 select-none">
@@ -664,32 +802,45 @@ export function GamifiedLoginView({
                   </div>
 
                   {!isOtpVerified && (
-                    <button
-                      type="button"
-                      disabled={!isPhoneValid || otpLoading || resendSeconds > 0}
-                      onClick={handleRequestOtp}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 whitespace-nowrap transition-colors"
-                    >
-                      <RefreshCw
-                        className={`w-3.5 h-3.5 ${otpLoading ? 'animate-spin' : ''}`}
-                        aria-hidden="true"
-                      />
-                      <span>
-                        {otpLoading
-                          ? initialMedium === 'hi'
-                            ? 'भेजा जा रहा है...'
-                            : 'Generating...'
-                          : resendSeconds > 0
-                            ? `${initialMedium === 'hi' ? 'पुनः भेजें' : 'Resend'} (${resendSeconds}s)`
-                            : otpRequested
-                              ? initialMedium === 'hi'
-                                ? 'नया OTP भेजें'
-                                : 'Resend OTP'
-                              : initialMedium === 'hi'
-                                ? 'OTP प्राप्त करें'
-                                : 'Send Secure OTP'}
-                      </span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={!isPhoneValid || otpLoading || resendSeconds > 0}
+                        onClick={handleRequestOtp}
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 whitespace-nowrap transition-colors"
+                      >
+                        <RefreshCw
+                          className={`w-3.5 h-3.5 ${otpLoading ? 'animate-spin' : ''}`}
+                          aria-hidden="true"
+                        />
+                        <span>
+                          {otpLoading
+                            ? initialMedium === 'hi'
+                              ? 'भेजा जा रहा है...'
+                              : 'Generating...'
+                            : resendSeconds > 0
+                              ? `${initialMedium === 'hi' ? 'पुनः भेजें' : 'Resend'} (${resendSeconds}s)`
+                              : otpRequested
+                                ? initialMedium === 'hi'
+                                  ? 'नया OTP भेजें'
+                                  : 'Resend OTP'
+                                : initialMedium === 'hi'
+                                  ? 'OTP भेजें'
+                                  : 'Send Secure OTP'}
+                        </span>
+                      </button>
+
+                      {otpMode === 'demo' && !otpRequested && (
+                        <button
+                          type="button"
+                          onClick={handleQuickDemoVerify}
+                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 whitespace-nowrap"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{initialMedium === 'hi' ? 'तुरंत डेमो (123456)' : 'Quick Demo (123456)'}</span>
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -700,8 +851,8 @@ export function GamifiedLoginView({
                       <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
                       <span>
                         {initialMedium === 'hi'
-                          ? `${verifiedMobile} सुरक्षित रूप से सत्यापित हो गया। 3D लोक अनलॉक है!`
-                          : `${verifiedMobile} verified via secure OTP token. 3D Sanctuary unlocked!`}
+                          ? `${verifiedMobile} सत्यापित हो गया (${otpMode === 'demo' ? 'डेमो मोड' : 'लाइव API'})। 3D लोक अनलॉक है!`
+                          : `${verifiedMobile} verified (${otpMode === 'demo' ? 'Demo Test Mode' : 'Live API'}). 3D Sanctuary unlocked!`}
                       </span>
                     </span>
                     <button
@@ -714,10 +865,9 @@ export function GamifiedLoginView({
                   </div>
                 )}
 
-                {/* Active OTP Entry Panel */}
-                {otpRequested && !isOtpVerified && (
+                {/* Active OTP Entry Panel (Also directly usable in Demo Mode!) */}
+                {(otpRequested || otpMode === 'demo') && !isOtpVerified && (
                   <div className="space-y-3 pt-2 border-t border-slate-800">
-                    {/* Sandbox SMS Dispatch Notification Banner */}
                     {smsPreviewOtp && (
                       <div className="p-3 rounded-lg bg-[#162033] border border-sky-500/40 flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-start gap-2.5 min-w-0">
@@ -727,12 +877,22 @@ export function GamifiedLoginView({
                           />
                           <div className="text-xs">
                             <p className="font-semibold text-slate-200">
-                              {initialMedium === 'hi'
-                                ? `${maskedMobile} पर SMS भेजा गया`
-                                : `SMS Dispatched to ${maskedMobile}`}
+                              {otpMode === 'demo'
+                                ? initialMedium === 'hi'
+                                  ? `${maskedMobile || '+91 ••••••••••'} — डेमो OTP तैयार है`
+                                  : `${maskedMobile || '+91 ••••••••••'} — Demo OTP Ready`
+                                : initialMedium === 'hi'
+                                  ? `${maskedMobile} पर SMS भेजा गया`
+                                  : `SMS Dispatched to ${maskedMobile}`}
                             </p>
                             <p className="text-slate-400 mt-0.5">
-                              {initialMedium === 'hi' ? 'आपका सुरक्षा कोड:' : 'Your 6-digit OTP:'}{' '}
+                              {otpMode === 'demo'
+                                ? initialMedium === 'hi'
+                                  ? 'डेमो कोड (या कोई भी 6 अंक):'
+                                  : 'Demo OTP (or any 6 digits):'
+                                : initialMedium === 'hi'
+                                  ? 'आपका सुरक्षा कोड:'
+                                  : 'Your 6-digit OTP:'}{' '}
                               <span className="font-mono font-bold text-amber-300 tracking-wider">
                                 {smsPreviewOtp}
                               </span>
@@ -744,7 +904,7 @@ export function GamifiedLoginView({
                           onClick={handleFillAndVerifyPreviewOtp}
                           className="px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md whitespace-nowrap"
                         >
-                          {initialMedium === 'hi' ? 'कोड भरें व सत्यापित करें' : 'Auto-Fill & Verify'}
+                          {initialMedium === 'hi' ? 'कोड भरें व सत्यापित करें' : 'Verify 123456 Now'}
                         </button>
                       </div>
                     )}
@@ -761,11 +921,12 @@ export function GamifiedLoginView({
                             type="text"
                             inputMode="numeric"
                             maxLength={6}
+                            placeholder={otpMode === 'demo' ? String(idx + 1) : '•'}
                             value={digit}
                             onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                             onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                             aria-label={`OTP digit ${idx + 1}`}
-                            className="w-10 h-11 sm:w-11 sm:h-12 text-center font-mono text-lg font-bold bg-[#121D33] border border-slate-600 focus:border-amber-400 rounded-lg text-white focus:outline-none tabular-nums"
+                            className="w-10 h-11 sm:w-11 sm:h-12 text-center font-mono text-lg font-bold bg-[#121D33] border border-slate-600 focus:border-amber-400 rounded-lg text-white placeholder:text-slate-600 focus:outline-none tabular-nums"
                           />
                         ))}
                       </div>
@@ -828,8 +989,8 @@ export function GamifiedLoginView({
                       : 'Entering 3D Sanctuary...'
                     : !isOtpVerified
                       ? initialMedium === 'hi'
-                        ? 'प्रवेश हेतु ऊपर मोबाइल OTP सत्यापित करें'
-                        : 'Verify Mobile OTP Above to Enter 3D World'
+                        ? 'प्रवेश हेतु ऊपर 123456 या कोई भी 6-अंकीय OTP सत्यापित करें'
+                        : 'Verify 123456 or Any 6-Digit OTP Above to Enter'
                       : initialMedium === 'hi'
                         ? "Vishal's Quest Academy 3D लोक में प्रवेश करें"
                         : "Enter Vishal's Quest Academy 3D World"}
@@ -844,8 +1005,8 @@ export function GamifiedLoginView({
         <Shield className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
         <span>
           {initialMedium === 'hi'
-            ? 'आपका सत्यापित मोबाइल नंबर व पासकोड सभी डिवाइस पर आपका XP, बॉस मुहरें और रैंक सुरक्षित रखता है।'
-            : 'Your verified mobile number + passcode preserves your XP, Boss Seals, and Leaderboard rank securely.'}
+            ? 'डेमो टेस्ट मोड और लाइव बैकएंड OTP API दोनों समर्थित हैं ताकि आप बिना रुकावट 3D वर्ल्ड टेस्ट कर सकें।'
+            : 'Supports both instant Demo Test Mode (123456 / any 6 digits) and Live Backend OTP API verification.'}
         </span>
       </footer>
     </div>

@@ -125,7 +125,7 @@ export function PortalTransitionOverlay({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.16 }}
-          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#091326]/90 backdrop-blur-sm"
+          className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center bg-[#091326]/94"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.84, rotateX: 16, y: 18 }}

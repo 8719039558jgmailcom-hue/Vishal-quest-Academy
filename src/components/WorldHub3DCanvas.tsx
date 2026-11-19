@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import {
   ArrowRight,
   CheckCircle2,
@@ -24,6 +23,13 @@ import { getChapterNodesForSubject, getSubjectBookSections } from '../data/mpboa
 import { SUBJECT_REALMS } from '../data/questConfig';
 import { AdventurerState, GradeLevel, Medium, SubjectId } from '../types/quiz';
 import { playFootstepSound, playPortalTransitionSound } from '../utils/soundFx';
+import {
+  applyStudioEnvironment,
+  createSimulationTimer,
+  createStudioRenderer,
+  detectSoftwareWebGL,
+  disposeObjectHierarchy,
+} from '../utils/threeHelpers';
 import {
   createColosseumPavilion,
   createGradeMonolith,
@@ -341,27 +347,11 @@ export function WorldHub3DCanvas({
     const container = mountRef.current;
     if (!container) return;
 
-    const isSoftwareGl = (() => {
-      try {
-        const probe = document.createElement('canvas');
-        const gl = probe.getContext('webgl2');
-        if (!gl) return true;
-        const ext = gl.getExtension('WEBGL_debug_renderer_info');
-        const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
-        const gpu = String(gl.getParameter(param) ?? '');
-        gl.getExtension('WEBGL_lose_context')?.loseContext();
-        return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
-      } catch {
-        return true;
-      }
-    })();
+    const isSoftwareGl = detectSoftwareWebGL();
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: !isSoftwareGl,
-        powerPreference: 'high-performance',
-      });
+      renderer = createStudioRenderer(isSoftwareGl, { exposure: 1.08 });
     } catch {
       setWebglError(true);
       return;
@@ -370,15 +360,6 @@ export function WorldHub3DCanvas({
     const width = Math.max(320, container.clientWidth);
     const height = Math.max(320, container.clientHeight);
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
-    renderer.shadowMap.enabled = !isSoftwareGl;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.domElement.style.display = 'block';
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
 
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
@@ -396,13 +377,8 @@ export function WorldHub3DCanvas({
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(SANCTUARY_PALETTE.fogHex, 0.0145);
 
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    const envTex = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
-    pmremGenerator.dispose();
-
     const disposables: Array<{ dispose: () => void }> = [];
-    disposables.push(envTex);
+    applyStudioEnvironment(renderer, scene, disposables);
 
     const skyDome = createAtmosphericSkyDome(SANCTUARY_PALETTE);
     scene.add(skyDome.mesh);
@@ -603,9 +579,10 @@ export function WorldHub3DCanvas({
       _dummyColor.setRGB(tone, tone * 0.99, tone * 0.96);
       paverInst.setColorAt(idx, _dummyColor);
     });
+    if (paverInst.instanceColor) paverInst.instanceColor.needsUpdate = true;
     paverInst.computeBoundingSphere();
     scene.add(paverInst);
-    disposables.push(paverGeo);
+    disposables.push(paverGeo, paverInst);
 
     // Courtyard & Avenue Iron Fire Braziers
     [
@@ -705,7 +682,7 @@ export function WorldHub3DCanvas({
     });
     rockInst.computeBoundingSphere();
     scene.add(rockInst);
-    disposables.push(rockGeo, rockMat);
+    disposables.push(rockGeo, rockMat, rockInst);
 
     // Build All 10 Interactive 3D Landmark Monuments + Proxy Colliders
     const clickableProxies: THREE.Object3D[] = [];
@@ -998,7 +975,7 @@ export function WorldHub3DCanvas({
     renderer.domElement.addEventListener('pointermove', onPointerMove);
 
     // Main Game World Loop
-    const clock = new THREE.Clock();
+    const timer = createSimulationTimer();
     let frameId = 0;
     let disposed = false;
     let walkPhase = 0;
@@ -1006,7 +983,7 @@ export function WorldHub3DCanvas({
     let wasWalking = false;
     let lastTagPush = 0;
 
-    const afterDraw = (cb: () => void) => {
+    const afterDraw = (cb: (ts?: number) => void) => {
       if (disposed) return;
       try {
         const gl = renderer.getContext() as WebGL2RenderingContext;
@@ -1019,12 +996,12 @@ export function WorldHub3DCanvas({
             frameId = window.setTimeout(poll, 5);
           } else {
             if (sync) gl.deleteSync(sync);
-            frameId = window.setTimeout(cb, 80);
+            frameId = window.setTimeout(() => cb(), 80);
           }
         };
         frameId = window.setTimeout(poll, 5);
       } catch {
-        frameId = window.setTimeout(cb, 80);
+        frameId = window.setTimeout(() => cb(), 80);
       }
     };
 
@@ -1046,10 +1023,11 @@ export function WorldHub3DCanvas({
       setTags(next);
     };
 
-    const tick = () => {
+    const tick = (timestamp?: number) => {
       if (disposed) return;
-      const delta = Math.min(0.08, clock.getDelta());
-      const elapsed = clock.getElapsedTime();
+      timer.update(timestamp);
+      const delta = timer.getDelta();
+      const elapsed = timer.getElapsed();
 
       // Water wave & torch flame animation
       texSet.waterBump.offset.x = (elapsed * 0.022) % 1;
@@ -1220,6 +1198,7 @@ export function WorldHub3DCanvas({
       disposed = true;
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
+      timer.dispose();
       resizeObserver.disconnect();
       controls.removeEventListener('start', onControlStart);
       controls.removeEventListener('end', onControlEnd);
@@ -1230,16 +1209,7 @@ export function WorldHub3DCanvas({
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
       renderer.domElement.removeEventListener('webglcontextrestored', handleContextRestored);
 
-      heroRig.root.traverse((obj) => {
-        if (obj instanceof THREE.Mesh) {
-          obj.geometry.dispose();
-          if (Array.isArray(obj.material)) {
-            obj.material.forEach((m) => m.dispose());
-          } else {
-            obj.material.dispose();
-          }
-        }
-      });
+      disposeObjectHierarchy(heroRig.root);
       disposables.forEach((d) => d.dispose());
       renderer.dispose();
       container.innerHTML = '';

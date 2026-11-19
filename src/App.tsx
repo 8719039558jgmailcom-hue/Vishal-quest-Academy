@@ -311,77 +311,110 @@ export default function App() {
   );
 
   const handleEnterAcademy = async (payload: LoginPayload) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        heroId:
-          payload.heroName.toLowerCase() === adventurer.heroName.toLowerCase() &&
-          payload.passcode === adventurer.passcode
-            ? adventurer.heroId
-            : undefined,
+    let resolvedState: AdventurerState | null = null;
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          heroId:
+            payload.heroName.toLowerCase() === adventurer.heroName.toLowerCase() &&
+            payload.passcode === adventurer.passcode
+              ? adventurer.heroId
+              : undefined,
+          heroName: payload.heroName,
+          passcode: payload.passcode,
+          bioTitle: payload.bioTitle,
+          mobileNumber: payload.mobileNumber,
+          verificationToken: payload.verificationToken,
+          grade: payload.grade,
+          medium: payload.medium,
+          avatarId: payload.avatarId,
+          customAvatarUrl: payload.customAvatarUrl,
+        }),
+      });
+
+      if (res.ok) {
+        const text = await res.text();
+        const data = text
+          ? (JSON.parse(text) as {
+              profile?: {
+                heroId: string;
+                heroName: string;
+                passcode: string;
+                bioTitle: string;
+                mobileNumber?: string;
+                mobileVerified?: boolean;
+                avatarId: AvatarId;
+                customAvatarUrl: string | null;
+                totalXP: number;
+                dailyStreak: number;
+                bestCombo: number;
+                duelWins: number;
+                clearedStages: Record<string, number>;
+                bossesDefeated: string[];
+              };
+            })
+          : null;
+
+        if (data?.profile) {
+          const p = data.profile;
+          const isSameHero = p.heroId === adventurer.heroId;
+          resolvedState = {
+            ...adventurer,
+            heroId: p.heroId,
+            heroName: p.heroName,
+            passcode: p.passcode,
+            bioTitle: p.bioTitle,
+            mobileNumber: p.mobileNumber || payload.mobileNumber,
+            mobileVerified: true,
+            avatarId: p.avatarId,
+            customAvatarUrl: p.customAvatarUrl,
+            totalXP: isSameHero ? Math.max(adventurer.totalXP, p.totalXP) : p.totalXP,
+            dailyStreak: isSameHero
+              ? Math.max(adventurer.dailyStreak, p.dailyStreak)
+              : p.dailyStreak,
+            bestCombo: isSameHero ? Math.max(adventurer.bestCombo, p.bestCombo) : p.bestCombo,
+            duelWins: Math.max(isSameHero ? adventurer.duelWins : 0, p.duelWins),
+            clearedStages: isSameHero
+              ? { ...p.clearedStages, ...adventurer.clearedStages }
+              : p.clearedStages ?? {},
+            bossesDefeated: isSameHero
+              ? Array.from(new Set([...(p.bossesDefeated ?? []), ...adventurer.bossesDefeated]))
+              : p.bossesDefeated ?? [],
+            history: isSameHero ? adventurer.history : [],
+          };
+        }
+      } else if (!payload.demoMode) {
+        const errText = await res.text();
+        let errMessage = 'Mobile OTP verification could not be confirmed. Please retry.';
+        try {
+          const parsedErr = JSON.parse(errText) as { error?: string };
+          if (parsedErr.error) errMessage = parsedErr.error;
+        } catch {
+          // Ignore non-JSON error body
+        }
+        throw new Error(errMessage);
+      }
+    } catch (err) {
+      if (!payload.demoMode) {
+        throw err instanceof Error ? err : new Error('Unable to complete Live API login.');
+      }
+    }
+
+    if (!resolvedState) {
+      resolvedState = {
+        ...adventurer,
         heroName: payload.heroName,
         passcode: payload.passcode,
         bioTitle: payload.bioTitle,
         mobileNumber: payload.mobileNumber,
-        verificationToken: payload.verificationToken,
-        grade: payload.grade,
-        medium: payload.medium,
+        mobileVerified: true,
         avatarId: payload.avatarId,
         customAvatarUrl: payload.customAvatarUrl,
-      }),
-    });
-
-    if (!res.ok) {
-      const errData = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(
-        errData.error || 'Mobile OTP verification could not be confirmed. Please retry.'
-      );
-    }
-
-    const data = (await res.json()) as {
-      profile: {
-        heroId: string;
-        heroName: string;
-        passcode: string;
-        bioTitle: string;
-        mobileNumber?: string;
-        mobileVerified?: boolean;
-        avatarId: AvatarId;
-        customAvatarUrl: string | null;
-        totalXP: number;
-        dailyStreak: number;
-        bestCombo: number;
-        duelWins: number;
-        clearedStages: Record<string, number>;
-        bossesDefeated: string[];
       };
-    };
-
-    const p = data.profile;
-    const isSameHero = p.heroId === adventurer.heroId;
-    const resolvedState: AdventurerState = {
-      ...adventurer,
-      heroId: p.heroId,
-      heroName: p.heroName,
-      passcode: p.passcode,
-      bioTitle: p.bioTitle,
-      mobileNumber: p.mobileNumber || payload.mobileNumber,
-      mobileVerified: true,
-      avatarId: p.avatarId,
-      customAvatarUrl: p.customAvatarUrl,
-      totalXP: isSameHero ? Math.max(adventurer.totalXP, p.totalXP) : p.totalXP,
-      dailyStreak: isSameHero ? Math.max(adventurer.dailyStreak, p.dailyStreak) : p.dailyStreak,
-      bestCombo: isSameHero ? Math.max(adventurer.bestCombo, p.bestCombo) : p.bestCombo,
-      duelWins: Math.max(isSameHero ? adventurer.duelWins : 0, p.duelWins),
-      clearedStages: isSameHero
-        ? { ...p.clearedStages, ...adventurer.clearedStages }
-        : p.clearedStages ?? {},
-      bossesDefeated: isSameHero
-        ? Array.from(new Set([...(p.bossesDefeated ?? []), ...adventurer.bossesDefeated]))
-        : p.bossesDefeated ?? [],
-      history: isSameHero ? adventurer.history : [],
-    };
+    }
 
     setGrade(payload.grade);
     setMedium(payload.medium);

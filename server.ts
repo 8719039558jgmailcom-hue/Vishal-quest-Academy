@@ -357,8 +357,36 @@ async function startServer() {
   const hashOtp = (otp: string, salt: string): string =>
     crypto.createHash('sha256').update(`${otp}:${salt}`).digest('hex');
 
-  app.post('/api/auth/otp/request', (req, res) => {
-    const body = req.body as { mobileNumber?: string };
+  // Optional Real SMS Provider Dispatcher (Fast2SMS / MSG91 / Twilio Webhook via env vars)
+  const dispatchRealSmsOtp = async (
+    mobile: string,
+    otpCode: string
+  ): Promise<'live-sms' | 'sandbox'> => {
+    const webhookUrl = process.env.SMS_PROVIDER_WEBHOOK_URL?.trim();
+    const apiKey = process.env.SMS_PROVIDER_API_KEY?.trim();
+    if (!webhookUrl) return 'sandbox';
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          to: mobile,
+          otp: otpCode,
+          message: `Your Vishal's Quest Academy verification code is ${otpCode}. Valid for 5 minutes.`,
+        }),
+      });
+      return response.ok ? 'live-sms' : 'sandbox';
+    } catch {
+      return 'sandbox';
+    }
+  };
+
+  app.post('/api/auth/otp/request', async (req, res) => {
+    const body = req.body as { mobileNumber?: string; demoMode?: boolean };
     const normalized = normalizeIndianMobile(body.mobileNumber);
     if (!normalized) {
       res.status(400).json({
@@ -368,8 +396,9 @@ async function startServer() {
     }
 
     const now = Date.now();
+    const isDemo = Boolean(body.demoMode);
     const existing = otpChallenges.get(normalized);
-    if (existing && now < existing.resendAvailableAt) {
+    if (!isDemo && existing && now < existing.resendAvailableAt) {
       const waitSeconds = Math.ceil((existing.resendAvailableAt - now) / 1000);
       res.status(429).json({
         error: `Please wait ${waitSeconds}s before requesting another OTP.`,
@@ -378,12 +407,12 @@ async function startServer() {
       return;
     }
 
-    // Cryptographically secure 6-digit OTP generation
-    const otpCode = String(crypto.randomInt(100000, 1000000));
+    // Cryptographically secure 6-digit OTP generation (or 123456 in Demo Test Mode)
+    const otpCode = isDemo ? '123456' : String(crypto.randomInt(100000, 1000000));
     const salt = crypto.randomBytes(16).toString('hex');
     const codeHash = hashOtp(otpCode, salt);
     const expiresInSeconds = 300;
-    const resendCooldownSeconds = 30;
+    const resendCooldownSeconds = isDemo ? 5 : 30;
 
     otpChallenges.set(normalized, {
       salt,
@@ -393,20 +422,23 @@ async function startServer() {
       attemptsRemaining: 5,
     });
 
+    const deliveryMode = isDemo ? 'demo' : await dispatchRealSmsOtp(normalized, otpCode);
     const masked = `${normalized.slice(0, 3)} ••••••${normalized.slice(-4)}`;
+
     res.json({
       ok: true,
+      demoMode: isDemo,
+      deliveryMode,
       normalizedMobile: normalized,
       maskedMobile: masked,
       expiresInSeconds,
       resendCooldownSeconds,
-      // Sandbox SMS dispatch preview so local & preview users can read the server-generated CSPRNG OTP
-      smsPreviewOtp: otpCode,
+      smsPreviewOtp: deliveryMode === 'live-sms' ? undefined : otpCode,
     });
   });
 
   app.post('/api/auth/otp/verify', (req, res) => {
-    const body = req.body as { mobileNumber?: string; otp?: string };
+    const body = req.body as { mobileNumber?: string; otp?: string; demoMode?: boolean };
     const normalized = normalizeIndianMobile(body.mobileNumber);
     if (!normalized) {
       res.status(400).json({ error: 'Invalid mobile number format.' });
@@ -415,7 +447,27 @@ async function startServer() {
 
     const cleanedOtp = String(body.otp || '').replace(/\D/g, '');
     if (!/^\d{6}$/.test(cleanedOtp)) {
-      res.status(400).json({ error: 'Enter the full 6-digit verification code.' });
+      res.status(400).json({ error: 'Enter a valid 6-digit verification code.' });
+      return;
+    }
+
+    const now = Date.now();
+    const isDemo = Boolean(body.demoMode);
+
+    if (isDemo) {
+      // Demo Test Mode: accept 123456 or any 6-digit numeric OTP and mint a valid single-use verification token
+      otpChallenges.delete(normalized);
+      const verificationToken = crypto.randomBytes(24).toString('hex');
+      verifiedTokens.set(verificationToken, {
+        mobile: normalized,
+        expiresAt: now + 30 * 60 * 1000,
+      });
+      res.json({
+        verified: true,
+        demoMode: true,
+        normalizedMobile: normalized,
+        verificationToken,
+      });
       return;
     }
 
@@ -425,7 +477,6 @@ async function startServer() {
       return;
     }
 
-    const now = Date.now();
     if (now > record.expiresAt) {
       otpChallenges.delete(normalized);
       res.status(410).json({ error: 'This OTP has expired. Please request a fresh code.' });
@@ -462,6 +513,7 @@ async function startServer() {
 
     res.json({
       verified: true,
+      demoMode: false,
       normalizedMobile: normalized,
       verificationToken,
     });
@@ -687,17 +739,340 @@ async function startServer() {
     });
   });
 
+  const processMultiplayerAction = (
+    heroId: string,
+    msg: { type: string; [key: string]: unknown },
+    onError: (message: string) => void
+  ): boolean => {
+    const profile = heroId ? db.profiles[heroId] : undefined;
+    if (!profile) {
+      onError('Hero profile is still syncing. Please retry in a moment.');
+      return false;
+    }
+
+    if (msg.type === 'squad:create') {
+      const name = String(msg.name || '').trim().slice(0, 32) || `${profile.heroName}'s Squad`;
+      const grade: GradeLevel = msg.grade === '10' ? '10' : '12';
+      const focusSubject = (msg.focusSubject as SubjectId | 'all') || 'all';
+      const squadId = `sq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const squad: StoredSquad = {
+        id: squadId,
+        code: makeRoomCode('SQ'),
+        name,
+        grade,
+        focusSubject,
+        leaderHeroId: profile.heroId,
+        squadXP: 50,
+        memberHeroIds: [profile.heroId],
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            heroId: profile.heroId,
+            heroName: profile.heroName,
+            text: `Created Study Squad "${name}"! Ready for MP Board conquest.`,
+            sentAt: new Date().toISOString(),
+          },
+        ],
+        createdAt: new Date().toISOString(),
+      };
+      db.squads[squadId] = squad;
+      schedulePersist();
+      broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
+      return true;
+    }
+
+    if (msg.type === 'squad:join') {
+      const codeOrId = String(msg.codeOrId || '').trim().toUpperCase();
+      const squad = Object.values(db.squads).find(
+        (s) => s.id.toUpperCase() === codeOrId || s.code.toUpperCase() === codeOrId
+      );
+      if (!squad) {
+        onError('Study Squad code not found.');
+        return false;
+      }
+      if (!squad.memberHeroIds.includes(profile.heroId)) {
+        squad.memberHeroIds.push(profile.heroId);
+        squad.messages.push({
+          id: `msg-${Date.now()}`,
+          heroId: profile.heroId,
+          heroName: profile.heroName,
+          text: `${profile.heroName} joined the squad!`,
+          sentAt: new Date().toISOString(),
+        });
+        schedulePersist();
+      }
+      broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
+      return true;
+    }
+
+    if (msg.type === 'squad:leave') {
+      const squadId = String(msg.squadId || '');
+      const squad = db.squads[squadId];
+      if (!squad) return true;
+      squad.memberHeroIds = squad.memberHeroIds.filter((id) => id !== profile.heroId);
+      if (squad.memberHeroIds.length === 0) {
+        delete db.squads[squadId];
+      }
+      schedulePersist();
+      broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
+      return true;
+    }
+
+    if (msg.type === 'squad:chat') {
+      const squadId = String(msg.squadId || '');
+      const text = String(msg.text || '').trim().slice(0, 260);
+      const squad = db.squads[squadId];
+      if (!squad || !text) return true;
+      if (!squad.memberHeroIds.includes(profile.heroId)) {
+        squad.memberHeroIds.push(profile.heroId);
+      }
+      squad.messages.push({
+        id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        heroId: profile.heroId,
+        heroName: profile.heroName,
+        text,
+        sentAt: new Date().toISOString(),
+      });
+      if (squad.messages.length > 60) {
+        squad.messages = squad.messages.slice(-60);
+      }
+      schedulePersist();
+      broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
+      return true;
+    }
+
+    if (msg.type === 'duel:create') {
+      const grade: GradeLevel = msg.grade === '10' ? '10' : '12';
+      const subjectId = (msg.subjectId as SubjectId | 'all') || 'all';
+      const title =
+        String(msg.title || '').trim().slice(0, 40) ||
+        `${profile.heroName}'s Class ${grade}th Duel`;
+      const roomId = `duel-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const questions = drawDuelQuestions(grade, subjectId);
+
+      const participant: DuelParticipant = {
+        heroId: profile.heroId,
+        heroName: profile.heroName,
+        avatarId: profile.avatarId,
+        customAvatarUrl: profile.customAvatarUrl,
+        hp: 100,
+        score: 0,
+        correctCount: 0,
+        streak: 0,
+        answeredCurrent: false,
+      };
+
+      const room: DuelRoom = {
+        id: roomId,
+        code: makeRoomCode('DUEL'),
+        title,
+        grade,
+        subjectId,
+        hostHeroId: profile.heroId,
+        status: 'waiting',
+        currentRound: 0,
+        totalRounds: questions.length,
+        roundSecondsRemaining: 25,
+        currentQuestion: null,
+        participants: [participant],
+        winnerHeroId: null,
+        taunts: [],
+      };
+
+      duelRooms.set(roomId, { room, questions, roundStartedAt: Date.now() });
+      broadcast({ type: 'duels:updated', duels: listDuelRooms() });
+      return true;
+    }
+
+    if (msg.type === 'duel:join') {
+      const codeOrId = String(msg.codeOrId || '').trim().toUpperCase();
+      const entry = Array.from(duelRooms.values()).find(
+        (d) => d.room.id.toUpperCase() === codeOrId || d.room.code.toUpperCase() === codeOrId
+      );
+      if (!entry) {
+        onError('Duel room not found.');
+        return false;
+      }
+      if (entry.room.status === 'finished') {
+        onError('That duel has already finished.');
+        return false;
+      }
+      if (!entry.room.participants.some((p) => p.heroId === profile.heroId)) {
+        if (entry.room.participants.length >= 6) {
+          onError('Duel room is full.');
+          return false;
+        }
+        entry.room.participants.push({
+          heroId: profile.heroId,
+          heroName: profile.heroName,
+          avatarId: profile.avatarId,
+          customAvatarUrl: profile.customAvatarUrl,
+          hp: 100,
+          score: 0,
+          correctCount: 0,
+          streak: 0,
+          answeredCurrent: false,
+        });
+      }
+      broadcast({ type: 'duel:updated', room: entry.room });
+      broadcast({ type: 'duels:updated', duels: listDuelRooms() });
+      return true;
+    }
+
+    if (msg.type === 'duel:start') {
+      const roomId = String(msg.roomId || '');
+      const internal = duelRooms.get(roomId);
+      if (!internal || internal.room.status !== 'waiting') return true;
+      if (internal.room.hostHeroId !== profile.heroId) return true;
+
+      internal.room.status = 'active';
+      internal.room.currentRound = 0;
+      internal.room.roundSecondsRemaining = 25;
+      internal.room.currentQuestion = internal.questions[0] ?? null;
+      internal.roundStartedAt = Date.now();
+      broadcast({ type: 'duel:updated', room: internal.room });
+      broadcast({ type: 'duels:updated', duels: listDuelRooms() });
+      return true;
+    }
+
+    if (msg.type === 'duel:answer') {
+      const roomId = String(msg.roomId || '');
+      const selectedIndex = Number(msg.selectedIndex);
+      const round = Number(msg.round);
+      const internal = duelRooms.get(roomId);
+      if (!internal || internal.room.status !== 'active') return true;
+      if (internal.room.currentRound !== round) return true;
+
+      const participant = internal.room.participants.find((p) => p.heroId === profile.heroId);
+      const currentQ = internal.room.currentQuestion;
+      if (!participant || !currentQ || participant.answeredCurrent) return true;
+
+      const isCorrect = selectedIndex === currentQ.correctIndex;
+      participant.answeredCurrent = true;
+      participant.lastAnswerCorrect = isCorrect;
+
+      if (isCorrect) {
+        participant.correctCount += 1;
+        participant.streak += 1;
+        const speedBonus = Math.max(0, internal.room.roundSecondsRemaining * 4);
+        const comboBonus = Math.min(80, (participant.streak - 1) * 20);
+        participant.score += 120 + speedBonus + comboBonus;
+      } else {
+        participant.streak = 0;
+        participant.hp = Math.max(0, participant.hp - 20);
+      }
+
+      broadcast({ type: 'duel:updated', room: internal.room });
+
+      const allAnswered = internal.room.participants.every((p) => p.answeredCurrent);
+      if (allAnswered) {
+        setTimeout(() => {
+          advanceDuelRound(internal);
+        }, 900);
+      }
+      return true;
+    }
+
+    if (msg.type === 'duel:taunt') {
+      const roomId = String(msg.roomId || '');
+      const internal = duelRooms.get(roomId);
+      if (!internal) return true;
+      const emoji = String(msg.emoji || '😤').slice(0, 8);
+      const text = String(msg.text || 'Prepare for defeat!').slice(0, 64);
+      const taunt: DuelTaunt = {
+        id: `taunt-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        fromHeroId: profile.heroId,
+        fromHeroName: profile.heroName,
+        emoji,
+        text,
+        sentAt: new Date().toISOString(),
+      };
+      internal.room.taunts = [...internal.room.taunts.slice(-8), taunt];
+      broadcast({ type: 'duel:updated', room: internal.room });
+      return true;
+    }
+
+    if (msg.type === 'duel:leave') {
+      const roomId = String(msg.roomId || '');
+      const internal = duelRooms.get(roomId);
+      if (!internal) return true;
+      internal.room.participants = internal.room.participants.filter(
+        (p) => p.heroId !== profile.heroId
+      );
+      if (internal.room.participants.length === 0) {
+        duelRooms.delete(roomId);
+      } else if (internal.room.hostHeroId === profile.heroId) {
+        internal.room.hostHeroId = internal.room.participants[0].heroId;
+      }
+      broadcast({ type: 'duels:updated', duels: listDuelRooms() });
+      return true;
+    }
+
+    return true;
+  };
+
+  app.post('/api/multiplayer/action', (req, res) => {
+    const body = (req.body || {}) as { heroId?: string; type?: string; [key: string]: unknown };
+    const heroId = String(body.heroId || '').trim();
+    if (!heroId || !body.type) {
+      res.status(400).json({ error: 'heroId and action type are required.' });
+      return;
+    }
+
+    let actionError: string | null = null;
+    processMultiplayerAction(heroId, { ...body, type: String(body.type) }, (errMsg) => {
+      actionError = errMsg;
+    });
+
+    if (actionError) {
+      res.status(400).json({ error: actionError });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      onlineCount: onlineHeroCounts.size,
+      leaderboard: buildLeaderboard(),
+      squads: listSerializedSquads(),
+      duels: listDuelRooms(),
+    });
+  });
+
   const server = http.createServer(app);
-  const wss = new WebSocketServer({ server, path: '/ws' });
+  const wss = new WebSocketServer({
+    server,
+    path: '/ws',
+    perMessageDeflate: false,
+  });
   wssRef = wss;
 
+  const socketAliveMap = new WeakMap<WebSocket, boolean>();
+
+  const unbindSocketHero = (ws: WebSocket) => {
+    const heroId = socketHeroMap.get(ws);
+    socketHeroMap.delete(ws);
+    if (heroId) {
+      const nextCount = Math.max(0, (onlineHeroCounts.get(heroId) ?? 1) - 1);
+      if (nextCount === 0) {
+        onlineHeroCounts.delete(heroId);
+      } else {
+        onlineHeroCounts.set(heroId, nextCount);
+      }
+      broadcastSnapshot();
+    }
+  };
+
   // Authoritative duel round countdown loop (1s tick)
-  setInterval(() => {
+  const duelTickTimer = setInterval(() => {
     for (const internal of duelRooms.values()) {
       if (internal.room.status !== 'active') continue;
       if (internal.room.roundSecondsRemaining > 0) {
         internal.room.roundSecondsRemaining -= 1;
-        broadcast({ type: 'duel:tick', roomId: internal.room.id, secondsRemaining: internal.room.roundSecondsRemaining });
+        broadcast({
+          type: 'duel:tick',
+          roomId: internal.room.id,
+          secondsRemaining: internal.room.roundSecondsRemaining,
+        });
       }
       if (internal.room.roundSecondsRemaining <= 0) {
         // Apply timeout damage to unanswered participants
@@ -714,16 +1089,56 @@ async function startServer() {
     }
   }, 1000);
 
+  // WebSocket keepalive heartbeat (25s) prevents proxy idle disconnects & prunes dead sockets
+  const heartbeatTimer = setInterval(() => {
+    for (const client of wss.clients) {
+      if (socketAliveMap.get(client) === false) {
+        unbindSocketHero(client);
+        client.terminate();
+        continue;
+      }
+      socketAliveMap.set(client, false);
+      try {
+        client.ping();
+      } catch {
+        // Ignore ping errors on closing sockets
+      }
+    }
+  }, 25000);
+
+  wss.on('error', (err) => {
+    console.error('WebSocketServer error:', err.message);
+  });
+
+  wss.on('close', () => {
+    clearInterval(duelTickTimer);
+    clearInterval(heartbeatTimer);
+  });
+
   wss.on('connection', (ws) => {
-    ws.send(
-      JSON.stringify({
-        type: 'state:sync',
-        onlineCount: onlineHeroCounts.size,
-        leaderboard: buildLeaderboard(),
-        squads: listSerializedSquads(),
-        duels: listDuelRooms(),
-      })
-    );
+    socketAliveMap.set(ws, true);
+
+    ws.on('pong', () => {
+      socketAliveMap.set(ws, true);
+    });
+
+    ws.on('error', (err) => {
+      console.warn('WebSocket client error:', err.message);
+    });
+
+    try {
+      ws.send(
+        JSON.stringify({
+          type: 'state:sync',
+          onlineCount: onlineHeroCounts.size,
+          leaderboard: buildLeaderboard(),
+          squads: listSerializedSquads(),
+          duels: listDuelRooms(),
+        })
+      );
+    } catch {
+      // Ignore send errors if socket closed immediately
+    }
 
     ws.on('message', (raw) => {
       try {
@@ -732,12 +1147,21 @@ async function startServer() {
           [key: string]: unknown;
         };
 
+        if (msg.type === 'ping') {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'pong' }));
+          }
+          return;
+        }
+
         if (msg.type === 'auth:bind') {
           const heroId = String(msg.heroId || '').trim();
           if (!heroId) return;
           const prevHero = socketHeroMap.get(ws);
           if (prevHero && prevHero !== heroId) {
-            onlineHeroCounts.set(prevHero, Math.max(0, (onlineHeroCounts.get(prevHero) ?? 1) - 1));
+            const reduced = Math.max(0, (onlineHeroCounts.get(prevHero) ?? 1) - 1);
+            if (reduced === 0) onlineHeroCounts.delete(prevHero);
+            else onlineHeroCounts.set(prevHero, reduced);
           }
           if (prevHero !== heroId) {
             socketHeroMap.set(ws, heroId);
@@ -748,281 +1172,18 @@ async function startServer() {
         }
 
         const heroId = socketHeroMap.get(ws) || String(msg.heroId || '').trim();
-        const profile = heroId ? db.profiles[heroId] : undefined;
-
-        if (msg.type === 'squad:create' && profile) {
-          const name = String(msg.name || '').trim().slice(0, 32) || `${profile.heroName}'s Squad`;
-          const grade: GradeLevel = msg.grade === '10' ? '10' : '12';
-          const focusSubject = (msg.focusSubject as SubjectId | 'all') || 'all';
-          const squadId = `sq-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-          const squad: StoredSquad = {
-            id: squadId,
-            code: makeRoomCode('SQ'),
-            name,
-            grade,
-            focusSubject,
-            leaderHeroId: profile.heroId,
-            squadXP: 50,
-            memberHeroIds: [profile.heroId],
-            messages: [
-              {
-                id: `msg-${Date.now()}`,
-                heroId: profile.heroId,
-                heroName: profile.heroName,
-                text: `Created Study Squad "${name}"! Ready for MP Board conquest.`,
-                sentAt: new Date().toISOString(),
-              },
-            ],
-            createdAt: new Date().toISOString(),
-          };
-          db.squads[squadId] = squad;
-          schedulePersist();
-          broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
-          return;
-        }
-
-        if (msg.type === 'squad:join' && profile) {
-          const codeOrId = String(msg.codeOrId || '').trim().toUpperCase();
-          const squad = Object.values(db.squads).find(
-            (s) => s.id.toUpperCase() === codeOrId || s.code.toUpperCase() === codeOrId
-          );
-          if (!squad) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Study Squad code not found.' }));
-            return;
+        processMultiplayerAction(heroId, msg, (errMsg) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'error', message: errMsg }));
           }
-          if (!squad.memberHeroIds.includes(profile.heroId)) {
-            squad.memberHeroIds.push(profile.heroId);
-            squad.messages.push({
-              id: `msg-${Date.now()}`,
-              heroId: profile.heroId,
-              heroName: profile.heroName,
-              text: `${profile.heroName} joined the squad!`,
-              sentAt: new Date().toISOString(),
-            });
-            schedulePersist();
-          }
-          broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
-          return;
-        }
-
-        if (msg.type === 'squad:leave' && profile) {
-          const squadId = String(msg.squadId || '');
-          const squad = db.squads[squadId];
-          if (!squad) return;
-          squad.memberHeroIds = squad.memberHeroIds.filter((id) => id !== profile.heroId);
-          if (squad.memberHeroIds.length === 0) {
-            delete db.squads[squadId];
-          }
-          schedulePersist();
-          broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
-          return;
-        }
-
-        if (msg.type === 'squad:chat' && profile) {
-          const squadId = String(msg.squadId || '');
-          const text = String(msg.text || '').trim().slice(0, 260);
-          const squad = db.squads[squadId];
-          if (!squad || !text) return;
-          if (!squad.memberHeroIds.includes(profile.heroId)) {
-            squad.memberHeroIds.push(profile.heroId);
-          }
-          squad.messages.push({
-            id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-            heroId: profile.heroId,
-            heroName: profile.heroName,
-            text,
-            sentAt: new Date().toISOString(),
-          });
-          if (squad.messages.length > 60) {
-            squad.messages = squad.messages.slice(-60);
-          }
-          schedulePersist();
-          broadcast({ type: 'squads:updated', squads: listSerializedSquads() });
-          return;
-        }
-
-        if (msg.type === 'duel:create' && profile) {
-          const grade: GradeLevel = msg.grade === '10' ? '10' : '12';
-          const subjectId = (msg.subjectId as SubjectId | 'all') || 'all';
-          const title =
-            String(msg.title || '').trim().slice(0, 40) ||
-            `${profile.heroName}'s Class ${grade}th Duel`;
-          const roomId = `duel-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-          const questions = drawDuelQuestions(grade, subjectId);
-
-          const participant: DuelParticipant = {
-            heroId: profile.heroId,
-            heroName: profile.heroName,
-            avatarId: profile.avatarId,
-            customAvatarUrl: profile.customAvatarUrl,
-            hp: 100,
-            score: 0,
-            correctCount: 0,
-            streak: 0,
-            answeredCurrent: false,
-          };
-
-          const room: DuelRoom = {
-            id: roomId,
-            code: makeRoomCode('DUEL'),
-            title,
-            grade,
-            subjectId,
-            hostHeroId: profile.heroId,
-            status: 'waiting',
-            currentRound: 0,
-            totalRounds: questions.length,
-            roundSecondsRemaining: 25,
-            currentQuestion: null,
-            participants: [participant],
-            winnerHeroId: null,
-            taunts: [],
-          };
-
-          duelRooms.set(roomId, { room, questions, roundStartedAt: Date.now() });
-          broadcast({ type: 'duels:updated', duels: listDuelRooms() });
-          return;
-        }
-
-        if (msg.type === 'duel:join' && profile) {
-          const codeOrId = String(msg.codeOrId || '').trim().toUpperCase();
-          const entry = Array.from(duelRooms.values()).find(
-            (d) => d.room.id.toUpperCase() === codeOrId || d.room.code.toUpperCase() === codeOrId
-          );
-          if (!entry) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Duel room not found.' }));
-            return;
-          }
-          if (entry.room.status === 'finished') {
-            ws.send(JSON.stringify({ type: 'error', message: 'That duel has already finished.' }));
-            return;
-          }
-          if (!entry.room.participants.some((p) => p.heroId === profile.heroId)) {
-            if (entry.room.participants.length >= 6) {
-              ws.send(JSON.stringify({ type: 'error', message: 'Duel room is full.' }));
-              return;
-            }
-            entry.room.participants.push({
-              heroId: profile.heroId,
-              heroName: profile.heroName,
-              avatarId: profile.avatarId,
-              customAvatarUrl: profile.customAvatarUrl,
-              hp: 100,
-              score: 0,
-              correctCount: 0,
-              streak: 0,
-              answeredCurrent: false,
-            });
-          }
-          broadcast({ type: 'duel:updated', room: entry.room });
-          broadcast({ type: 'duels:updated', duels: listDuelRooms() });
-          return;
-        }
-
-        if (msg.type === 'duel:start' && profile) {
-          const roomId = String(msg.roomId || '');
-          const internal = duelRooms.get(roomId);
-          if (!internal || internal.room.status !== 'waiting') return;
-          if (internal.room.hostHeroId !== profile.heroId) return;
-
-          internal.room.status = 'active';
-          internal.room.currentRound = 0;
-          internal.room.roundSecondsRemaining = 25;
-          internal.room.currentQuestion = internal.questions[0] ?? null;
-          internal.roundStartedAt = Date.now();
-          broadcast({ type: 'duel:updated', room: internal.room });
-          broadcast({ type: 'duels:updated', duels: listDuelRooms() });
-          return;
-        }
-
-        if (msg.type === 'duel:answer' && profile) {
-          const roomId = String(msg.roomId || '');
-          const selectedIndex = Number(msg.selectedIndex);
-          const round = Number(msg.round);
-          const internal = duelRooms.get(roomId);
-          if (!internal || internal.room.status !== 'active') return;
-          if (internal.room.currentRound !== round) return;
-
-          const participant = internal.room.participants.find((p) => p.heroId === profile.heroId);
-          const currentQ = internal.room.currentQuestion;
-          if (!participant || !currentQ || participant.answeredCurrent) return;
-
-          const isCorrect = selectedIndex === currentQ.correctIndex;
-          participant.answeredCurrent = true;
-          participant.lastAnswerCorrect = isCorrect;
-
-          if (isCorrect) {
-            participant.correctCount += 1;
-            participant.streak += 1;
-            const speedBonus = Math.max(0, internal.room.roundSecondsRemaining * 4);
-            const comboBonus = Math.min(80, (participant.streak - 1) * 20);
-            participant.score += 120 + speedBonus + comboBonus;
-          } else {
-            participant.streak = 0;
-            participant.hp = Math.max(0, participant.hp - 20);
-          }
-
-          broadcast({ type: 'duel:updated', room: internal.room });
-
-          const allAnswered = internal.room.participants.every((p) => p.answeredCurrent);
-          if (allAnswered) {
-            setTimeout(() => {
-              advanceDuelRound(internal);
-            }, 900);
-          }
-          return;
-        }
-
-        if (msg.type === 'duel:taunt' && profile) {
-          const roomId = String(msg.roomId || '');
-          const internal = duelRooms.get(roomId);
-          if (!internal) return;
-          const emoji = String(msg.emoji || '😤').slice(0, 8);
-          const text = String(msg.text || 'Prepare for defeat!').slice(0, 64);
-          const taunt: DuelTaunt = {
-            id: `taunt-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-            fromHeroId: profile.heroId,
-            fromHeroName: profile.heroName,
-            emoji,
-            text,
-            sentAt: new Date().toISOString(),
-          };
-          internal.room.taunts = [...internal.room.taunts.slice(-8), taunt];
-          broadcast({ type: 'duel:updated', room: internal.room });
-          return;
-        }
-
-        if (msg.type === 'duel:leave' && profile) {
-          const roomId = String(msg.roomId || '');
-          const internal = duelRooms.get(roomId);
-          if (!internal) return;
-          internal.room.participants = internal.room.participants.filter(
-            (p) => p.heroId !== profile.heroId
-          );
-          if (internal.room.participants.length === 0) {
-            duelRooms.delete(roomId);
-          } else if (internal.room.hostHeroId === profile.heroId) {
-            internal.room.hostHeroId = internal.room.participants[0].heroId;
-          }
-          broadcast({ type: 'duels:updated', duels: listDuelRooms() });
-        }
+        });
       } catch (err) {
         console.error('WS message parse error:', err);
       }
     });
 
     ws.on('close', () => {
-      const heroId = socketHeroMap.get(ws);
-      socketHeroMap.delete(ws);
-      if (heroId) {
-        const nextCount = Math.max(0, (onlineHeroCounts.get(heroId) ?? 1) - 1);
-        if (nextCount === 0) {
-          onlineHeroCounts.delete(heroId);
-        } else {
-          onlineHeroCounts.set(heroId, nextCount);
-        }
-        broadcastSnapshot();
-      }
+      unbindSocketHero(ws);
     });
   });
 

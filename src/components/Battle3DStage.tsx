@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { AvatarId } from '../types/quiz';
+import {
+  applyStudioEnvironment,
+  createSimulationTimer,
+  createStudioRenderer,
+  detectSoftwareWebGL,
+  disposeObjectHierarchy,
+} from '../utils/threeHelpers';
 import {
   BiomePalette,
   createAtmosphericSkyDome,
@@ -58,26 +64,11 @@ export function Battle3DStage({
     const container = mountRef.current;
     if (!container) return;
 
-    const isSoftwareGl = (() => {
-      try {
-        const c = document.createElement('canvas');
-        const gl = c.getContext('webgl2');
-        if (!gl) return true;
-        const ext = gl.getExtension('WEBGL_debug_renderer_info');
-        const gpu = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '');
-        gl.getExtension('WEBGL_lose_context')?.loseContext();
-        return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
-      } catch {
-        return true;
-      }
-    })();
+    const isSoftwareGl = detectSoftwareWebGL();
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({
-        antialias: !isSoftwareGl,
-        powerPreference: 'high-performance',
-      });
+      renderer = createStudioRenderer(isSoftwareGl, { exposure: 1.12 });
     } catch {
       setWebglUnavailable(true);
       return;
@@ -86,15 +77,6 @@ export function Battle3DStage({
     const width = Math.max(300, container.clientWidth);
     const height = Math.max(200, container.clientHeight);
     renderer.setSize(width, height);
-    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio, 2));
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
-    renderer.shadowMap.enabled = !isSoftwareGl;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.domElement.style.display = 'block';
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
 
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
@@ -108,12 +90,8 @@ export function Battle3DStage({
     const scene = new THREE.Scene();
     scene.fog = new THREE.FogExp2(ARENA_PALETTE.fogHex, 0.032);
 
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environment = envTex;
-    pmrem.dispose();
-
-    const disposables: Array<{ dispose: () => void }> = [envTex];
+    const disposables: Array<{ dispose: () => void }> = [];
+    applyStudioEnvironment(renderer, scene, disposables);
     const sky = createAtmosphericSkyDome(ARENA_PALETTE);
     scene.add(sky.mesh);
     disposables.push(sky);
@@ -251,11 +229,11 @@ export function Battle3DStage({
       renderer.compile(scene, camera);
     }
 
-    const clock = new THREE.Clock();
+    const timer = createSimulationTimer();
     let frameId = 0;
     let disposed = false;
 
-    const afterDraw = (cb: () => void) => {
+    const afterDraw = (cb: (ts?: number) => void) => {
       if (disposed) return;
       try {
         const gl = renderer.getContext() as WebGL2RenderingContext;
@@ -268,19 +246,20 @@ export function Battle3DStage({
             frameId = window.setTimeout(poll, 5);
           } else {
             if (sync) gl.deleteSync(sync);
-            frameId = window.setTimeout(cb, 80);
+            frameId = window.setTimeout(() => cb(), 80);
           }
         };
         frameId = window.setTimeout(poll, 5);
       } catch {
-        frameId = window.setTimeout(cb, 80);
+        frameId = window.setTimeout(() => cb(), 80);
       }
     };
 
-    const tick = () => {
+    const tick = (timestamp?: number) => {
       if (disposed) return;
-      const dt = Math.min(0.08, clock.getDelta());
-      const elapsed = clock.getElapsedTime();
+      timer.update(timestamp);
+      const dt = timer.getDelta();
+      const elapsed = timer.getElapsed();
 
       flameMat.emissiveIntensity = 1.45 + Math.sin(elapsed * 12) * 0.35;
 
@@ -375,18 +354,12 @@ export function Battle3DStage({
       disposed = true;
       cancelAnimationFrame(frameId);
       clearTimeout(frameId);
+      timer.dispose();
       ro.disconnect();
       renderer.domElement.removeEventListener('webglcontextlost', onLost);
 
-      [heroRig.root, bossRig.root].forEach((g) =>
-        g.traverse((obj) => {
-          if (obj instanceof THREE.Mesh) {
-            obj.geometry.dispose();
-            if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose());
-            else obj.material.dispose();
-          }
-        })
-      );
+      disposeObjectHierarchy(heroRig.root);
+      disposeObjectHierarchy(bossRig.root);
       disposables.forEach((d) => d.dispose());
       renderer.dispose();
       container.innerHTML = '';
