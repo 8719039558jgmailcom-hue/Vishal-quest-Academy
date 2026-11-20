@@ -198,13 +198,15 @@ export const CHAPTER_STAGES: StageDefinition[] = [
   },
 ];
 
-export function getHeroLevelFromXP(xp: number): {
+export interface HeroLevelInfo {
   level: number;
   title: { en: string; hi: string };
   currentInLevel: number;
   neededForNext: number;
   progressPercent: number;
-} {
+}
+
+export function getHeroLevelFromXP(xp: number): HeroLevelInfo {
   const step = 400;
   const level = Math.floor(xp / step) + 1;
   const currentInLevel = xp % step;

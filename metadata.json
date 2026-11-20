@@ -1,6 +1,6 @@
 {
-  "name": "SeniorPrep",
-  "description": "Grade 12 subject quizzes, timed practice exams, and instant diagnostic score results across Mathematics, Physics, Chemistry, Biology, English Literature, and Computer Science.",
+  "name": "बोर्ड क्वेस्ट (Board Quest)",
+  "description": "बोर्ड क्वेस्ट (Board Quest): MP Board Class 10th & 12th mobile-first 2D arcade study & quiz quest game across Hindi, English, Maths, Physics, and Chemistry with NCERT notes, 10s timed boss battles, chemistry beaker lab, and live multiplayer duels.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -18,10 +18,9 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { AVATARS, WORLD_MAP_BACKDROP } from '../data/questConfig';
+import { AVATARS } from '../data/questConfig';
 import { AvatarId, GradeLevel, Medium } from '../types/quiz';
 import { processCustomAvatarFile } from '../utils/imageUpload';
-import { Avatar3DPreview } from './Avatar3DPreview';
 import { SafeImage } from './SafeImage';
 
 export interface LoginPayload {
@@ -72,7 +71,7 @@ export function GamifiedLoginView({
   onMediumChange,
   onEnterAcademy,
 }: GamifiedLoginViewProps) {
-  const [heroName, setHeroName] = useState(initialName === 'Vishal' ? '' : initialName);
+  const [heroName, setHeroName] = useState(initialName === 'Player 1' ? '' : initialName);
   const [passcode, setPasscode] = useState(initialPasscode || 'MP2027');
   const [bioTitle, setBioTitle] = useState(initialBioTitle || '');
   const [grade, setGrade] = useState<GradeLevel>(initialGrade);
@@ -80,10 +79,8 @@ export function GamifiedLoginView({
   const [customAvatarUrl, setCustomAvatarUrl] = useState<string | null>(initialCustomAvatarUrl);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // OTP Mode: Demo Test Mode (Default so 123456 or any 6 digits works seamlessly) vs Live Backend OTP API
   const [otpMode, setOtpMode] = useState<'demo' | 'live'>('demo');
 
-  // Mobile Number & OTP Verification State
   const cleanInitialPhone = initialMobileNumber.replace(/\D/g, '').slice(-10);
   const [mobileDigits, setMobileDigits] = useState(cleanInitialPhone || '9876543210');
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
@@ -193,7 +190,6 @@ export function GamifiedLoginView({
 
       if (!res.ok || !data?.ok) {
         if (otpMode === 'demo') {
-          // Graceful Demo Test Mode fallback when hosted on a static-only endpoint
           setOtpRequested(true);
           setMaskedMobile(fallbackMasked);
           setSmsPreviewOtp('123456');
@@ -309,7 +305,6 @@ export function GamifiedLoginView({
 
       if (!res.ok || !data?.verified || !data.verificationToken || !data.normalizedMobile) {
         if (otpMode === 'demo') {
-          // Offline/static fallback verification token in Demo Test Mode
           setVerifiedMobile(fullPhone);
           setVerificationToken(`demo-token-${Date.now()}`);
           setSmsPreviewOtp(null);
@@ -368,19 +363,19 @@ export function GamifiedLoginView({
     if (!verificationToken || !verifiedMobile) {
       setSubmitError(
         initialMedium === 'hi'
-          ? '3D वर्ल्ड में प्रवेश करने से पहले ऊपर 6-अंकीय OTP (या 123456) सत्यापित करें।'
-          : 'Verify any 6-digit OTP (or 123456 in Demo Mode) above before entering the 3D World.'
+          ? 'आगे बढ़ने के लिए ऊपर 6-अंकीय OTP (या 123456) सत्यापित करें।'
+          : 'Verify any 6-digit OTP (or 123456 in Demo Mode) above to unlock Quest Gate.'
       );
       return;
     }
 
-    const cleanedName = heroName.trim() || 'Vishal';
+    const cleanedName = heroName.trim() || 'Player 1';
     const cleanedPass = passcode.trim() || 'MP2027';
     const cleanedBio =
       bioTitle.trim() ||
       (initialMedium === 'hi'
-        ? `कक्षा ${grade}वीं MP बोर्ड विजेता`
-        : `Class ${grade}th MP Board Seeker`);
+        ? `कक्षा ${grade}वीं MP बोर्ड चैलेंजर`
+        : `Class ${grade}th MP Board Challenger`);
 
     setSubmitError(null);
     setSubmitting(true);
@@ -411,33 +406,22 @@ export function GamifiedLoginView({
   };
 
   return (
-    <div className="min-h-screen adventure-bg text-slate-100 relative overflow-hidden flex flex-col justify-between">
-      {/* Atmospheric World Backdrop */}
-      <div className="absolute inset-0 pointer-events-none">
-        <SafeImage
-          src={WORLD_MAP_BACKDROP}
-          alt="Vishal's Quest Academy Citadel"
-          className="w-full h-full object-cover opacity-22"
-          fallbackTitle="Vishal's Quest Academy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#091326]/90 via-[#091326]/78 to-[#091326]" />
-      </div>
-
-      <div className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6">
-        {/* Top Bar: Wordmark + Medium Switch */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/15 border border-amber-400/50 flex items-center justify-center">
-              <Crown className="w-5 h-5 text-amber-400" aria-hidden="true" />
+    <div className="min-h-screen arcade-bg text-[#181C32] flex flex-col justify-between overflow-x-hidden">
+      <div className="max-w-5xl w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-8 space-y-5">
+        {/* Top Arcade Brand + Language Toggle */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-[#FACC15] comic-gloss border-[2.5px] border-[#181C32] shadow-[0_3px_0_#181C32] flex items-center justify-center shrink-0">
+              <Crown className="w-5 h-5 text-[#181C32]" aria-hidden="true" />
             </div>
-            <div>
-              <p className="font-display text-xl sm:text-2xl font-bold text-amber-400 tracking-tight">
-                Vishal&apos;s Quest Academy
+            <div className="min-w-0">
+              <p className="font-display text-xl sm:text-2xl font-bold text-[#181C32] leading-tight truncate">
+                {initialMedium === 'hi' ? 'बोर्ड क्वेस्ट' : 'बोर्ड क्वेस्ट · Board Quest'}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] font-bold text-[#2563EB] truncate">
                 {initialMedium === 'hi'
-                  ? 'नई NCERT 3D क्वेस्ट · MP बोर्ड कक्षा 10वीं व 12वीं'
-                  : 'New NCERT 3D Quest World · MP Board Class 10th & 12th'}
+                  ? 'MP बोर्ड कक्षा 10वीं व 12वीं · 2D आर्केड क्वेस्ट'
+                  : 'MP Board Class 10th & 12th · 2D Arcade Quest'}
               </p>
             </div>
           </div>
@@ -445,105 +429,48 @@ export function GamifiedLoginView({
           <button
             type="button"
             onClick={() => onMediumChange(initialMedium === 'en' ? 'hi' : 'en')}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-100 bg-[#162033] border border-slate-700 hover:border-amber-400 rounded-lg transition-colors"
+            className="min-h-[44px] px-3 py-2 text-xs font-bold bg-white hover:bg-[#EFF6FF] text-[#181C32] rounded-xl comic-btn-sm inline-flex items-center gap-1.5 shrink-0"
           >
-            <Languages className="w-4 h-4 text-amber-400" aria-hidden="true" />
-            <span>{initialMedium === 'en' ? 'हिन्दी माध्यम में बदलें' : 'Switch to English Medium'}</span>
+            <Languages className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+            <span>{initialMedium === 'en' ? 'हिन्दी' : 'English'}</span>
           </button>
         </div>
 
-        {/* Main Split Gate: Left 5 (Live 3D Character Forge + RPG Classes) + Right 7 (Identity & OTP Gate) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-          {/* Left: Live 3D Avatar Forge Stage + Custom Picture Upload + Class Cards */}
+        {/* Main Mobile-First 2-Zone Quest Gate (Stacked on phones, 12-col split on lg) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          {/* Player Stats / Hero Card Forge */}
           <motion.section
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            aria-label="3D Avatar customization"
-            className="lg:col-span-5 bg-[#162033]/95 border border-slate-600/80 rounded-2xl p-5 sm:p-6 space-y-5 adventure-card-3d"
+            transition={{ duration: 0.22 }}
+            aria-label="Player card customization"
+            className="lg:col-span-5 comic-card rounded-3xl overflow-hidden"
           >
-            <div className="space-y-1">
-              <p className="text-xs font-semibold text-amber-400">
-                {initialMedium === 'hi' ? 'चरण 1 · अपना 3D नायक गढ़ें' : 'Step 1 · Forge Your 3D Champion'}
-              </p>
-              <h1 className="font-display text-2xl font-bold text-white leading-tight [text-wrap:balance]">
-                {selectedPreset.name[initialMedium]} — {selectedPreset.title[initialMedium]}
-              </h1>
-              <p className="text-xs text-slate-400">{selectedPreset.perk[initialMedium]}</p>
-            </div>
-
-            <Avatar3DPreview
-              avatarId={avatarId}
-              heroName={heroName || selectedPreset.name[initialMedium]}
-            />
-
-            {/* RPG Class Selector */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-300">
-                {initialMedium === 'hi' ? '3D अवतार वर्ग चुनें:' : 'Select Playable 3D Class:'}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {AVATARS.map((av) => {
-                  const chosen = avatarId === av.id;
-                  return (
-                    <button
-                      key={av.id}
-                      type="button"
-                      onClick={() => setAvatarId(av.id)}
-                      className={`p-2.5 rounded-xl border text-left space-y-1.5 transition-colors ${
-                        chosen
-                          ? 'bg-amber-400/12 border-amber-400'
-                          : 'bg-[#0F172A] border-slate-700 hover:border-slate-500'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="w-8 h-8 rounded-md overflow-hidden border border-slate-600 shrink-0">
-                          <SafeImage
-                            src={av.imagePath}
-                            alt={av.name[initialMedium]}
-                            className="w-full h-full object-cover"
-                            fallbackTitle={av.name[initialMedium]}
-                          />
-                        </div>
-                        {chosen && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-                        )}
-                      </div>
-                      <p className="text-[11px] font-bold text-white truncate">
-                        {av.name[initialMedium]}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Custom Portrait Photo Upload */}
-            <div className="pt-4 border-t border-slate-700/80 flex items-center gap-4">
-              <div className="relative shrink-0">
-                <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-amber-400 bg-[#0B1220]">
-                  <SafeImage
-                    src={previewImage}
-                    alt={heroName || 'Hero Portrait'}
-                    className="w-full h-full object-cover"
-                    fallbackTitle={heroName || 'Hero'}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  aria-label="Upload custom portrait"
-                  className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center justify-center border-2 border-[#162033]"
-                >
-                  <Camera className="w-3.5 h-3.5" aria-hidden="true" />
-                </button>
+            {/* Colorful Comic Banner Header */}
+            <div className="bg-[#2563EB] border-b-[2.5px] border-[#181C32] p-4 sm:p-5 text-white relative">
+              <div className="flex items-center justify-between gap-2 text-xs font-mono font-bold text-[#FEF08A]">
+                <span>{initialMedium === 'hi' ? 'प्लेयर कार्ड · Lv.1' : 'PLAYER PASS · LV.1'}</span>
+                <span>{grade === '10' ? 'CLASS 10TH' : 'CLASS 12TH'}</span>
               </div>
 
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <p className="text-xs font-bold text-white">
-                  {initialMedium === 'hi' ? 'प्रोफ़ाइल चित्र (लीडरबोर्ड हेतु)' : 'Custom Portrait Picture'}
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
+              <div className="mt-3 flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-[3px] border-[#181C32] shadow-[0_4px_0_#181C32] bg-[#FACC15]">
+                    <SafeImage
+                      src={previewImage}
+                      alt={heroName || selectedPreset.name[initialMedium]}
+                      className="w-full h-full object-cover"
+                      fallbackTitle={heroName || 'Hero'}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label="Upload custom photo"
+                    className="absolute -bottom-2 -right-2 w-9 h-9 rounded-xl bg-[#FACC15] hover:bg-[#FDE047] text-[#181C32] border-2 border-[#181C32] shadow-[0_2px_0_#181C32] flex items-center justify-center active:translate-y-[2px]"
+                  >
+                    <Camera className="w-4 h-4" aria-hidden="true" />
+                  </button>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -551,76 +478,134 @@ export function GamifiedLoginView({
                     onChange={handleFileChange}
                     className="hidden"
                   />
+                </div>
+
+                <div className="min-w-0 flex-1 space-y-1">
+                  <h1 className="font-display text-xl sm:text-2xl font-bold text-white leading-tight truncate">
+                    {heroName.trim() || selectedPreset.name[initialMedium]}
+                  </h1>
+                  <p className="text-xs font-semibold text-[#DBEAFE] truncate">
+                    {selectedPreset.title[initialMedium]}
+                  </p>
+                  <p className="text-[11px] font-medium text-[#FEF08A]">
+                    {selectedPreset.perk[initialMedium]}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Avatar Selector Strip + Custom Photo Button */}
+            <div className="p-4 sm:p-5 space-y-4 bg-white">
+              <div className="space-y-2">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                  {initialMedium === 'hi' ? 'अपना 2D हीरो अवतार चुनें' : 'Choose Your Arcade Hero'}
+                </p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {AVATARS.map((av) => {
+                    const chosen = avatarId === av.id;
+                    return (
+                      <button
+                        key={av.id}
+                        type="button"
+                        onClick={() => setAvatarId(av.id)}
+                        className={`min-h-[82px] p-2 rounded-2xl border-2 text-center flex flex-col items-center justify-center gap-1.5 transition-transform active:translate-y-[2px] ${
+                          chosen
+                            ? 'bg-[#FEF08A] border-[#181C32] shadow-[0_3px_0_#181C32]'
+                            : 'bg-[#F8FAFF] border-slate-300 hover:border-[#181C32]'
+                        }`}
+                      >
+                        <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-[#181C32]">
+                          <SafeImage
+                            src={av.imagePath}
+                            alt={av.name[initialMedium]}
+                            className="w-full h-full object-cover"
+                            fallbackTitle={av.name[initialMedium]}
+                          />
+                          {chosen && (
+                            <span className="absolute -top-1 -right-1 bg-[#10B981] text-white rounded-full p-0.5">
+                              <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-bold text-[#181C32] leading-tight line-clamp-1">
+                          {av.name[initialMedium].split('·')[0].trim()}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t-2 border-dashed border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="min-h-[44px] flex-1 px-3 py-2 text-xs font-bold text-[#181C32] bg-[#EFF6FF] hover:bg-[#DBEAFE] rounded-xl comic-btn-sm inline-flex items-center justify-center gap-1.5"
+                >
+                  <Upload className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+                  <span>{initialMedium === 'hi' ? 'कस्टम फ़ोटो अपलोड' : 'Upload Custom Photo'}</span>
+                </button>
+                {customAvatarUrl && (
                   <button
                     type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-100 bg-[#0F172A] border border-slate-600 hover:border-amber-400 rounded-lg"
+                    onClick={() => setCustomAvatarUrl(null)}
+                    className="min-h-[44px] px-3 py-2 text-xs font-bold text-[#E11D48] bg-[#FFF1F2] rounded-xl comic-btn-sm inline-flex items-center gap-1"
                   >
-                    <Upload className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                    <span>{initialMedium === 'hi' ? 'फ़ोटो चुनें' : 'Upload Photo'}</span>
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{initialMedium === 'hi' ? 'हटाएँ' : 'Reset'}</span>
                   </button>
-                  {customAvatarUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setCustomAvatarUrl(null)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-red-300 bg-red-950/50 border border-red-800/70 rounded-lg"
-                    >
-                      <Trash2 className="w-3 h-3" aria-hidden="true" />
-                      <span>{initialMedium === 'hi' ? 'हटाएँ' : 'Reset'}</span>
-                    </button>
-                  )}
-                </div>
-                {uploadError && <p className="text-[11px] text-red-400">{uploadError}</p>}
+                )}
               </div>
+              {uploadError && <p className="text-xs font-semibold text-[#E11D48]">{uploadError}</p>}
             </div>
           </motion.section>
 
-          {/* Right: Hero Account Details & Dual-Mode Mobile OTP Gate */}
+          {/* Quest Gate Credentials & Dual-Mode Mobile OTP */}
           <motion.section
-            initial={{ opacity: 0, y: 18 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.05 }}
-            aria-label="Hero identity and mobile OTP verification"
-            className="lg:col-span-7 bg-[#162033]/95 border border-slate-600/80 rounded-2xl p-6 sm:p-7 adventure-card-3d space-y-6"
+            transition={{ duration: 0.25, delay: 0.04 }}
+            aria-label="Player account and OTP verification"
+            className="lg:col-span-7 comic-card rounded-3xl p-4 sm:p-6 space-y-5 bg-white"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-700/80">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-slate-200">
               <div>
-                <h2 className="font-display text-xl sm:text-2xl font-bold text-white">
+                <h2 className="font-display text-lg sm:text-xl font-bold text-[#181C32]">
                   {initialMedium === 'hi'
-                    ? 'अकाउंट व मोबाइल OTP सुरक्षा द्वार'
-                    : 'Hero Credentials & OTP Security Gate'}
+                    ? 'क्वेस्ट गेट & मोबाइल OTP प्रवेश'
+                    : 'Quest Gate & Mobile Verification'}
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs font-medium text-slate-600">
                   {initialMedium === 'hi'
-                    ? '1. नाम व कक्षा · 2. OTP सत्यापन (Demo 123456 या Live API) · 3. 3D लोक प्रवेश'
-                    : '1. Identity & Grade · 2. Mobile OTP (Demo 123456 or Live API) · 3. Enter 3D World'}
+                    ? '1. नाम व कक्षा चुनें · 2. OTP (123456) सत्यापित करें · 3. खेलें!'
+                    : '1. Hero & Class · 2. Verify OTP (123456 Demo) · 3. Start Quest!'}
                 </p>
               </div>
               <span
-                className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
-                  isOtpVerified ? 'text-emerald-400' : 'text-amber-400'
+                className={`inline-flex items-center gap-1 text-xs font-extrabold ${
+                  isOtpVerified ? 'text-[#059669]' : 'text-[#D97706]'
                 }`}
               >
                 {isOtpVerified ? (
                   <>
                     <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-                    <span>{initialMedium === 'hi' ? 'OTP सत्यापित' : 'OTP Verified'}</span>
+                    <span>{initialMedium === 'hi' ? 'सत्यापित' : 'Verified'}</span>
                   </>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" aria-hidden="true" />
-                    <span>{initialMedium === 'hi' ? 'सत्यापन आवश्यक' : 'OTP Required'}</span>
+                    <span>{initialMedium === 'hi' ? 'OTP आवश्यक' : 'OTP Locked'}</span>
                   </>
                 )}
               </span>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Hero Name + Recovery Passcode */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="login-hero-name" className="block text-xs font-semibold text-slate-300">
-                    {initialMedium === 'hi' ? 'नायक का नाम (Hero Name)' : 'Hero Name'}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name + Passcode */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="space-y-1">
+                  <label htmlFor="login-hero-name" className="block text-xs font-bold text-[#181C32]">
+                    {initialMedium === 'hi' ? 'खिलाड़ी का नाम (Hero Name)' : 'Hero Name'}
                   </label>
                   <input
                     id="login-hero-name"
@@ -629,18 +614,16 @@ export function GamifiedLoginView({
                     maxLength={24}
                     value={heroName}
                     onChange={(e) => setHeroName(e.target.value)}
-                    placeholder={initialMedium === 'hi' ? 'जैसे: विशाल शर्मा' : 'e.g. Vishal Sharma'}
-                    className="w-full px-3.5 py-2.5 text-sm bg-[#0B1220] border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
+                    placeholder={initialMedium === 'hi' ? 'जैसे: आरव शर्मा' : 'e.g. Aarav Sharma'}
+                    className="w-full min-h-[44px] px-3.5 py-2 text-sm font-semibold rounded-xl comic-input"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="login-passcode" className="block text-xs font-semibold text-slate-300">
-                    <span className="inline-flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-                      <span>
-                        {initialMedium === 'hi' ? 'गुप्त पासकोड (प्रगति हेतु)' : 'Secret Passcode (Sync XP)'}
-                      </span>
+                <div className="space-y-1">
+                  <label htmlFor="login-passcode" className="block text-xs font-bold text-[#181C32]">
+                    <span className="inline-flex items-center gap-1">
+                      <KeyRound className="w-3.5 h-3.5 text-[#D97706]" aria-hidden="true" />
+                      <span>{initialMedium === 'hi' ? 'पासकोड (XP सिंक)' : 'Secret Passcode'}</span>
                     </span>
                   </label>
                   <input
@@ -650,16 +633,16 @@ export function GamifiedLoginView({
                     value={passcode}
                     onChange={(e) => setPasscode(e.target.value)}
                     placeholder="MP2027"
-                    className="w-full px-3.5 py-2.5 text-sm font-mono bg-[#0B1220] border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
+                    className="w-full min-h-[44px] px-3.5 py-2 text-sm font-mono font-bold rounded-xl comic-input"
                   />
                 </div>
               </div>
 
-              {/* Hero Title + Grade Quest */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-                <div className="space-y-1.5">
-                  <label htmlFor="login-bio" className="block text-xs font-semibold text-slate-300">
-                    {initialMedium === 'hi' ? 'नायक उपाधि / लक्ष्य' : 'Hero Title / Motto'}
+              {/* Bio + Class Toggle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 items-end">
+                <div className="space-y-1">
+                  <label htmlFor="login-bio" className="block text-xs font-bold text-[#181C32]">
+                    {initialMedium === 'hi' ? 'खिलाड़ी उपाधि / लक्ष्य' : 'Title / Board Goal'}
                   </label>
                   <input
                     id="login-bio"
@@ -668,121 +651,106 @@ export function GamifiedLoginView({
                     value={bioTitle}
                     onChange={(e) => setBioTitle(e.target.value)}
                     placeholder={
-                      initialMedium === 'hi' ? 'जैसे: मेरिट मिशन 2027' : 'e.g. Board Merit Challenger'
+                      initialMedium === 'hi' ? 'जैसे: मेरिट मिशन 2027' : 'e.g. Board Topper 2027'
                     }
-                    className="w-full px-3.5 py-2.5 text-sm bg-[#0B1220] border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400"
+                    className="w-full min-h-[44px] px-3.5 py-2 text-sm font-medium rounded-xl comic-input"
                   />
                 </div>
 
-                <div className="space-y-1.5">
-                  <span className="block text-xs font-semibold text-slate-300">
-                    {initialMedium === 'hi' ? 'कक्षा चुनें' : 'Select Grade Syllabus'}
+                <div className="space-y-1">
+                  <span className="block text-xs font-bold text-[#181C32]">
+                    {initialMedium === 'hi' ? 'कक्षा चुनें' : 'Select Class'}
                   </span>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setGrade('10')}
-                      className={`py-2.5 px-3 text-xs font-bold rounded-lg border transition-colors ${
-                        grade === '10'
-                          ? 'bg-sky-600 border-sky-400 text-white'
-                          : 'bg-[#0B1220] border-slate-700 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      {initialMedium === 'hi' ? 'कक्षा 10वीं' : 'Class 10th'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setGrade('12')}
-                      className={`py-2.5 px-3 text-xs font-bold rounded-lg border transition-colors ${
-                        grade === '12'
-                          ? 'bg-sky-600 border-sky-400 text-white'
-                          : 'bg-[#0B1220] border-slate-700 text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      {initialMedium === 'hi' ? 'कक्षा 12वीं' : 'Class 12th'}
-                    </button>
+                    {(['10', '12'] as GradeLevel[]).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setGrade(g)}
+                        className={`min-h-[44px] py-2 px-3 text-xs font-extrabold rounded-xl comic-btn-sm ${
+                          grade === g
+                            ? 'bg-[#2563EB] text-white'
+                            : 'bg-[#F8FAFF] text-[#181C32] hover:bg-[#EFF6FF]'
+                        }`}
+                      >
+                        {initialMedium === 'hi' ? `कक्षा ${g}वीं` : `Class ${g}th`}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              {/* Mobile Number & Dual-Mode OTP Verification Module */}
+              {/* Dual-Mode OTP Module */}
               <div
-                className={`p-4 sm:p-5 rounded-xl border space-y-4 transition-colors ${
+                className={`p-3.5 sm:p-4 rounded-2xl border-2 space-y-3.5 ${
                   isOtpVerified
-                    ? 'bg-emerald-950/25 border-emerald-500/60'
-                    : 'bg-[#0B1220]/90 border-slate-700'
+                    ? 'bg-[#ECFDF5] border-[#059669]'
+                    : 'bg-[#F8FAFF] border-[#181C32]'
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <Phone
-                      className={`w-4 h-4 ${isOtpVerified ? 'text-emerald-400' : 'text-amber-400'}`}
+                      className={`w-4 h-4 ${isOtpVerified ? 'text-[#059669]' : 'text-[#2563EB]'}`}
                       aria-hidden="true"
                     />
-                    <span className="text-xs sm:text-sm font-bold text-white">
-                      {initialMedium === 'hi'
-                        ? 'मोबाइल नंबर व OTP सत्यापन'
-                        : 'Mobile Number & OTP Verification'}
+                    <span className="text-xs sm:text-sm font-extrabold text-[#181C32]">
+                      {initialMedium === 'hi' ? 'मोबाइल OTP सत्यापन' : 'Mobile OTP Check'}
                     </span>
                   </div>
 
-                  {/* Demo Test Mode vs Live Backend API Switch */}
+                  {/* Demo Test Mode vs Live API Mode */}
                   <div
                     role="group"
                     aria-label="OTP verification mode"
-                    className="inline-flex p-0.5 rounded-lg bg-[#162033] border border-slate-700"
+                    className="inline-flex p-0.5 rounded-xl bg-white border-2 border-[#181C32]"
                   >
                     <button
                       type="button"
                       onClick={() => handleModeSwitch('demo')}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors whitespace-nowrap ${
-                        otpMode === 'demo'
-                          ? 'bg-amber-400 text-slate-950'
-                          : 'text-slate-300 hover:text-white'
+                      className={`min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-extrabold rounded-lg ${
+                        otpMode === 'demo' ? 'bg-[#FACC15] text-[#181C32]' : 'text-slate-600'
                       }`}
                     >
                       <FlaskConical className="w-3 h-3" aria-hidden="true" />
-                      <span>{initialMedium === 'hi' ? 'डेमो टेस्ट मोड' : 'Demo Test Mode'}</span>
+                      <span>{initialMedium === 'hi' ? 'डेमो मोड' : 'Demo Mode'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => handleModeSwitch('live')}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors whitespace-nowrap ${
-                        otpMode === 'live'
-                          ? 'bg-sky-500 text-slate-950'
-                          : 'text-slate-300 hover:text-white'
+                      className={`min-h-[34px] inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-extrabold rounded-lg ${
+                        otpMode === 'live' ? 'bg-[#38BDF8] text-[#181C32]' : 'text-slate-600'
                       }`}
                     >
                       <Server className="w-3 h-3" aria-hidden="true" />
-                      <span>{initialMedium === 'hi' ? 'लाइव बैकएंड API' : 'Live Backend API'}</span>
+                      <span>{initialMedium === 'hi' ? 'लाइव API' : 'Live API'}</span>
                     </button>
                   </div>
                 </div>
 
-                {/* Clear Guidance Bar */}
                 {!isOtpVerified && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300 bg-[#121D33] border border-slate-800 rounded-lg px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl px-3 py-2">
                     <span>
                       {otpMode === 'demo'
                         ? initialMedium === 'hi'
-                          ? 'डेमो टेस्ट मोड सक्रिय: 123456 या कोई भी 6-अंकीय OTP डालें और तुरंत 3D वर्ल्ड टेस्ट करें।'
-                          : 'Demo Test Mode active: Use 123456 or any 6-digit OTP to test the 3D World immediately.'
+                          ? 'डेमो मोड: 123456 या कोई भी 6 अंक डालें और तुरंत खेलें!'
+                          : 'Demo Test Mode: Enter 123456 or any 6 digits to jump straight in.'
                         : initialMedium === 'hi'
-                          ? 'लाइव बैकएंड API: सर्वर पर क्रिप्टोग्राफिक OTP जनरेट व सत्यापित होता है।'
-                          : 'Live Backend API: Generates & verifies a cryptographic OTP via the Express backend.'}
+                          ? 'लाइव API: एक्सप्रेस सर्वर से OTP भेजा व जाँचा जाएगा।'
+                          : 'Live Backend API: Generates & verifies SHA-256 OTP on server.'}
                     </span>
                     {expirySeconds > 0 && (
-                      <span className="font-mono text-amber-300 tabular-nums shrink-0">
+                      <span className="font-mono font-bold text-[#D97706] tabular-nums shrink-0">
                         {formatTimer(expirySeconds)}
                       </span>
                     )}
                   </div>
                 )}
 
-                {/* Phone Input + Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-2.5">
-                  <div className="flex items-center flex-1 bg-[#121D33] border border-slate-700 focus-within:border-amber-400 rounded-lg overflow-hidden">
-                    <span className="px-3 py-2.5 text-xs font-mono font-bold text-amber-400 bg-[#0F172A] border-r border-slate-700 select-none">
+                {/* Phone Input + Send / Quick Demo */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex items-center flex-1 bg-white border-2 border-[#181C32] rounded-xl overflow-hidden min-h-[46px]">
+                    <span className="px-3 py-2.5 text-xs font-mono font-extrabold text-[#181C32] bg-[#FACC15] border-r-2 border-[#181C32] select-none">
                       +91
                     </span>
                     <input
@@ -797,17 +765,17 @@ export function GamifiedLoginView({
                         initialMedium === 'hi' ? '10-अंकीय मोबाइल नंबर' : '10-digit mobile number'
                       }
                       aria-label="Mobile number"
-                      className="flex-1 px-3 py-2.5 text-sm font-mono bg-transparent text-white placeholder:text-slate-500 focus:outline-none tabular-nums"
+                      className="flex-1 min-w-0 px-3 py-2 text-sm font-mono font-bold bg-transparent text-[#181C32] placeholder:text-slate-400 focus:outline-none tabular-nums"
                     />
                   </div>
 
                   {!isOtpVerified && (
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-2 sm:flex items-center gap-2">
                       <button
                         type="button"
                         disabled={!isPhoneValid || otpLoading || resendSeconds > 0}
                         onClick={handleRequestOtp}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 whitespace-nowrap transition-colors"
+                        className="min-h-[46px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-extrabold rounded-xl bg-[#38BDF8] hover:bg-[#7DD3FC] disabled:opacity-50 text-[#181C32] comic-btn-sm whitespace-nowrap"
                       >
                         <RefreshCw
                           className={`w-3.5 h-3.5 ${otpLoading ? 'animate-spin' : ''}`}
@@ -816,17 +784,17 @@ export function GamifiedLoginView({
                         <span>
                           {otpLoading
                             ? initialMedium === 'hi'
-                              ? 'भेजा जा रहा है...'
-                              : 'Generating...'
+                              ? 'भेज रहे...'
+                              : 'Sending...'
                             : resendSeconds > 0
-                              ? `${initialMedium === 'hi' ? 'पुनः भेजें' : 'Resend'} (${resendSeconds}s)`
+                              ? `${resendSeconds}s`
                               : otpRequested
                                 ? initialMedium === 'hi'
-                                  ? 'नया OTP भेजें'
-                                  : 'Resend OTP'
+                                  ? 'पुनः भेजें'
+                                  : 'Resend'
                                 : initialMedium === 'hi'
                                   ? 'OTP भेजें'
-                                  : 'Send Secure OTP'}
+                                  : 'Send OTP'}
                         </span>
                       </button>
 
@@ -834,84 +802,64 @@ export function GamifiedLoginView({
                         <button
                           type="button"
                           onClick={handleQuickDemoVerify}
-                          className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 whitespace-nowrap"
+                          className="min-h-[46px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-extrabold rounded-xl bg-[#FACC15] hover:bg-[#FDE047] text-[#181C32] comic-btn-sm whitespace-nowrap"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                          <span>{initialMedium === 'hi' ? 'तुरंत डेमो (123456)' : 'Quick Demo (123456)'}</span>
+                          <span>{initialMedium === 'hi' ? 'डेमो (123456)' : 'Quick 123456'}</span>
                         </button>
                       )}
                     </div>
                   )}
                 </div>
 
-                {/* Verified State Confirmation */}
                 {isOtpVerified && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs text-emerald-300">
-                    <span className="inline-flex items-center gap-1.5 font-semibold">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#065F46] font-bold">
+                    <span className="inline-flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-[#059669]" aria-hidden="true" />
                       <span>
                         {initialMedium === 'hi'
-                          ? `${verifiedMobile} सत्यापित हो गया (${otpMode === 'demo' ? 'डेमो मोड' : 'लाइव API'})। 3D लोक अनलॉक है!`
-                          : `${verifiedMobile} verified (${otpMode === 'demo' ? 'Demo Test Mode' : 'Live API'}). 3D Sanctuary unlocked!`}
+                          ? `${verifiedMobile} सत्यापित! प्रवेश द्वार खुला है।`
+                          : `${verifiedMobile} verified! Quest Gate unlocked.`}
                       </span>
                     </span>
                     <button
                       type="button"
                       onClick={() => handleMobileInputChange('')}
-                      className="text-[11px] font-semibold text-slate-300 underline hover:text-white"
+                      className="text-xs underline text-[#181C32]"
                     >
-                      {initialMedium === 'hi' ? 'नंबर बदलें' : 'Change Number'}
+                      {initialMedium === 'hi' ? 'बदलें' : 'Change'}
                     </button>
                   </div>
                 )}
 
-                {/* Active OTP Entry Panel (Also directly usable in Demo Mode!) */}
                 {(otpRequested || otpMode === 'demo') && !isOtpVerified && (
-                  <div className="space-y-3 pt-2 border-t border-slate-800">
+                  <div className="space-y-3 pt-2 border-t-2 border-dashed border-slate-300">
                     {smsPreviewOtp && (
-                      <div className="p-3 rounded-lg bg-[#162033] border border-sky-500/40 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-start gap-2.5 min-w-0">
-                          <MessageSquare
-                            className="w-4 h-4 text-sky-400 shrink-0 mt-0.5"
-                            aria-hidden="true"
-                          />
-                          <div className="text-xs">
-                            <p className="font-semibold text-slate-200">
-                              {otpMode === 'demo'
-                                ? initialMedium === 'hi'
-                                  ? `${maskedMobile || '+91 ••••••••••'} — डेमो OTP तैयार है`
-                                  : `${maskedMobile || '+91 ••••••••••'} — Demo OTP Ready`
-                                : initialMedium === 'hi'
-                                  ? `${maskedMobile} पर SMS भेजा गया`
-                                  : `SMS Dispatched to ${maskedMobile}`}
-                            </p>
-                            <p className="text-slate-400 mt-0.5">
-                              {otpMode === 'demo'
-                                ? initialMedium === 'hi'
-                                  ? 'डेमो कोड (या कोई भी 6 अंक):'
-                                  : 'Demo OTP (or any 6 digits):'
-                                : initialMedium === 'hi'
-                                  ? 'आपका सुरक्षा कोड:'
-                                  : 'Your 6-digit OTP:'}{' '}
-                              <span className="font-mono font-bold text-amber-300 tracking-wider">
-                                {smsPreviewOtp}
-                              </span>
-                            </p>
-                          </div>
+                      <div className="p-2.5 rounded-xl bg-[#EFF6FF] border-2 border-[#2563EB] flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs min-w-0">
+                          <MessageSquare className="w-4 h-4 text-[#2563EB] shrink-0" aria-hidden="true" />
+                          <span className="font-bold text-[#181C32] truncate">
+                            {maskedMobile || '+91 ••••••••••'} · OTP:{' '}
+                            <span className="font-mono text-[#D97706]">{smsPreviewOtp}</span>
+                          </span>
                         </div>
                         <button
                           type="button"
                           onClick={handleFillAndVerifyPreviewOtp}
-                          className="px-3 py-1.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-md whitespace-nowrap"
+                          className="min-h-[36px] px-3 py-1 text-xs font-extrabold bg-[#FACC15] text-[#181C32] rounded-lg border-2 border-[#181C32] whitespace-nowrap"
                         >
-                          {initialMedium === 'hi' ? 'कोड भरें व सत्यापित करें' : 'Verify 123456 Now'}
+                          {initialMedium === 'hi' ? '123456 सत्यापित करें' : 'Verify 123456'}
                         </button>
                       </div>
                     )}
 
-                    {/* 6-Box Segmented OTP Input + Verify CTA */}
+                    {/* Mobile-safe 6-slot keypad OTP grid */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-1.5 sm:gap-2" role="group" aria-label="6-digit OTP code">
+                      <div
+                        className="grid grid-cols-6 gap-1.5 w-full sm:max-w-[290px]"
+                        role="group"
+                        aria-label="6-digit OTP code"
+                      >
                         {otpDigits.map((digit, idx) => (
                           <input
                             key={idx}
@@ -926,7 +874,7 @@ export function GamifiedLoginView({
                             onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                             onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                             aria-label={`OTP digit ${idx + 1}`}
-                            className="w-10 h-11 sm:w-11 sm:h-12 text-center font-mono text-lg font-bold bg-[#121D33] border border-slate-600 focus:border-amber-400 rounded-lg text-white placeholder:text-slate-600 focus:outline-none tabular-nums"
+                            className="w-full h-12 text-center font-mono text-lg font-extrabold rounded-xl comic-input tabular-nums"
                           />
                         ))}
                       </div>
@@ -935,14 +883,14 @@ export function GamifiedLoginView({
                         type="button"
                         disabled={otpString.length !== 6 || verifyingOtp}
                         onClick={() => handleVerifyOtp()}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 whitespace-nowrap transition-colors"
+                        className="min-h-[46px] inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-extrabold rounded-xl bg-[#34D399] hover:bg-[#10B981] disabled:opacity-50 text-[#181C32] comic-btn-sm whitespace-nowrap"
                       >
                         <ShieldCheck className="w-4 h-4" aria-hidden="true" />
                         <span>
                           {verifyingOtp
                             ? initialMedium === 'hi'
-                              ? 'सत्यापन जारी...'
-                              : 'Verifying...'
+                              ? 'जाँच जारी...'
+                              : 'Checking...'
                             : initialMedium === 'hi'
                               ? 'OTP सत्यापित करें'
                               : 'Verify OTP'}
@@ -953,7 +901,7 @@ export function GamifiedLoginView({
                 )}
 
                 {otpError && (
-                  <p className="text-xs text-red-400 font-medium" role="alert">
+                  <p className="text-xs font-bold text-[#E11D48]" role="alert">
                     {otpError}
                   </p>
                 )}
@@ -961,7 +909,7 @@ export function GamifiedLoginView({
 
               {submitError && (
                 <p
-                  className="text-xs text-red-400 bg-red-950/50 border border-red-800/70 rounded-lg px-3 py-2"
+                  className="text-xs font-bold text-[#E11D48] bg-[#FFF1F2] border-2 border-[#E11D48] rounded-xl px-3 py-2"
                   role="alert"
                 >
                   {submitError}
@@ -971,10 +919,10 @@ export function GamifiedLoginView({
               <button
                 type="submit"
                 disabled={submitting || !isOtpVerified}
-                className={`w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 text-base font-bold rounded-xl transition-all ${
+                className={`w-full min-h-[54px] inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm sm:text-base font-extrabold rounded-2xl ${
                   isOtpVerified
-                    ? 'text-slate-950 bg-amber-400 hover:bg-amber-300 adventure-btn-gold'
-                    : 'text-slate-400 bg-slate-800 border border-slate-700 cursor-not-allowed'
+                    ? 'text-[#181C32] bg-[#FACC15] hover:bg-[#FDE047] comic-btn'
+                    : 'text-slate-500 bg-slate-200 border-2 border-slate-400 cursor-not-allowed'
                 }`}
               >
                 {isOtpVerified ? (
@@ -985,15 +933,15 @@ export function GamifiedLoginView({
                 <span>
                   {submitting
                     ? initialMedium === 'hi'
-                      ? '3D लोक खुल रहा है...'
-                      : 'Entering 3D Sanctuary...'
+                      ? 'क्वेस्ट हब खुल रहा है...'
+                      : 'Launching Arcade Hub...'
                     : !isOtpVerified
                       ? initialMedium === 'hi'
                         ? 'प्रवेश हेतु ऊपर 123456 या कोई भी 6-अंकीय OTP सत्यापित करें'
-                        : 'Verify 123456 or Any 6-Digit OTP Above to Enter'
+                        : 'Verify 123456 or 6-Digit OTP Above'
                       : initialMedium === 'hi'
-                        ? "Vishal's Quest Academy 3D लोक में प्रवेश करें"
-                        : "Enter Vishal's Quest Academy 3D World"}
+                        ? 'बोर्ड क्वेस्ट खेलें!'
+                        : 'PLAY BOARD QUEST!'}
                 </span>
               </button>
             </form>
@@ -1001,12 +949,12 @@ export function GamifiedLoginView({
         </div>
       </div>
 
-      <footer className="relative z-10 border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-        <Shield className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
+      <footer className="border-t-2 border-[#181C32] bg-white py-3.5 px-4 text-center text-xs font-semibold text-slate-600 flex items-center justify-center gap-2">
+        <Shield className="w-3.5 h-3.5 text-[#2563EB]" aria-hidden="true" />
         <span>
           {initialMedium === 'hi'
-            ? 'डेमो टेस्ट मोड और लाइव बैकएंड OTP API दोनों समर्थित हैं ताकि आप बिना रुकावट 3D वर्ल्ड टेस्ट कर सकें।'
-            : 'Supports both instant Demo Test Mode (123456 / any 6 digits) and Live Backend OTP API verification.'}
+            ? 'डेमो मोड (123456) व लाइव OTP API · MP बोर्ड NCERT 10वीं व 12वीं'
+            : 'Demo Mode (123456) & Live OTP API · MP Board NCERT Class 10th & 12th'}
         </span>
       </footer>
     </div>

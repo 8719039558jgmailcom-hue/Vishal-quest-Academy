@@ -8,6 +8,9 @@ import { createServer as createViteServer } from 'vite';
 import { MP_BOARD_10_QUESTIONS } from './src/data/mpboard10';
 import { MP_BOARD_12_QUESTIONS } from './src/data/mpboard12';
 import { EXTRA_MP_QUESTIONS } from './src/data/mpboardExtraQuestions';
+import { MORE_MP_10_QUESTIONS } from './src/data/mpboardMore10';
+import { MORE_MP_12_QUESTIONS } from './src/data/mpboardMore12';
+import { fisherYatesShuffle, shuffleEncounterQuestions } from './src/utils/shuffleQuiz';
 import {
   AvatarId,
   DuelParticipant,
@@ -206,7 +209,8 @@ function listDuelRooms(): DuelRoom[] {
 
 function drawDuelQuestions(grade: GradeLevel, subjectId: SubjectId | 'all'): MPQuestion[] {
   const basePool = grade === '10' ? MP_BOARD_10_QUESTIONS : MP_BOARD_12_QUESTIONS;
-  const pool = [...basePool, ...EXTRA_MP_QUESTIONS.filter((q) => q.grade === grade)];
+  const morePool = grade === '10' ? MORE_MP_10_QUESTIONS : MORE_MP_12_QUESTIONS;
+  const pool = [...basePool, ...morePool, ...EXTRA_MP_QUESTIONS.filter((q) => q.grade === grade)];
   const filtered =
     subjectId === 'all' ? pool : pool.filter((q) => q.subjectId === subjectId);
 
@@ -214,18 +218,9 @@ function drawDuelQuestions(grade: GradeLevel, subjectId: SubjectId | 'all'): MPQ
   const tricky = filtered.filter((q) => q.isTricky || q.sourceTag === 'TRICKY 2027');
   const standard = filtered.filter((q) => !q.isTricky && q.sourceTag !== 'TRICKY 2027');
 
-  const shuffle = <T,>(arr: T[]): T[] => {
-    const copy = [...arr];
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  };
-
   const picked: MPQuestion[] = [];
-  const shuffledStandard = shuffle(standard);
-  const shuffledTricky = shuffle(tricky);
+  const shuffledStandard = fisherYatesShuffle(standard);
+  const shuffledTricky = fisherYatesShuffle(tricky);
 
   if (shuffledTricky.length > 0) {
     picked.push(shuffledTricky[0]);
@@ -239,7 +234,7 @@ function drawDuelQuestions(grade: GradeLevel, subjectId: SubjectId | 'all'): MPQ
     picked.push(q);
   }
 
-  return shuffle(picked);
+  return shuffleEncounterQuestions(picked);
 }
 
 let wssRef: WebSocketServer | null = null;
@@ -308,7 +303,7 @@ function advanceDuelRound(internal: InternalDuelState): void {
   }
 
   room.currentRound = nextIndex;
-  room.roundSecondsRemaining = 25;
+  room.roundSecondsRemaining = 10;
   room.currentQuestion = questions[nextIndex] ?? null;
   room.participants.forEach((p) => {
     p.answeredCurrent = false;
@@ -376,7 +371,7 @@ async function startServer() {
         body: JSON.stringify({
           to: mobile,
           otp: otpCode,
-          message: `Your Vishal's Quest Academy verification code is ${otpCode}. Valid for 5 minutes.`,
+          message: `Your बोर्ड क्वेस्ट (Board Quest) verification code is ${otpCode}. Valid for 5 minutes.`,
         }),
       });
       return response.ok ? 'live-sms' : 'sandbox';
@@ -544,7 +539,7 @@ async function startServer() {
       Date.now() > tokenRecord.expiresAt
     ) {
       res.status(403).json({
-        error: 'Mandatory mobile OTP verification is required before entering the 3D world.',
+        error: 'Mandatory mobile OTP verification is required before entering Board Quest.',
       });
       return;
     }
@@ -872,7 +867,7 @@ async function startServer() {
         status: 'waiting',
         currentRound: 0,
         totalRounds: questions.length,
-        roundSecondsRemaining: 25,
+        roundSecondsRemaining: 10,
         currentQuestion: null,
         participants: [participant],
         winnerHeroId: null,
@@ -927,7 +922,7 @@ async function startServer() {
 
       internal.room.status = 'active';
       internal.room.currentRound = 0;
-      internal.room.roundSecondsRemaining = 25;
+      internal.room.roundSecondsRemaining = 10;
       internal.room.currentQuestion = internal.questions[0] ?? null;
       internal.roundStartedAt = Date.now();
       broadcast({ type: 'duel:updated', room: internal.room });
@@ -968,7 +963,7 @@ async function startServer() {
       if (allAnswered) {
         setTimeout(() => {
           advanceDuelRound(internal);
-        }, 900);
+        }, 2000);
       }
       return true;
     }
@@ -1202,7 +1197,7 @@ async function startServer() {
   }
 
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Vishal's Quest Academy server listening on http://0.0.0.0:${PORT}`);
+    console.log(`Board Quest (बोर्ड क्वेस्ट) server listening on http://0.0.0.0:${PORT}`);
   });
 }
 

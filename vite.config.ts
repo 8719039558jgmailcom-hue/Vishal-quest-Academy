@@ -41,10 +41,6 @@ export default defineConfig(() => {
           codeSplitting: {
             groups: [
               {
-                name: 'three-vendor',
-                test: /node_modules[\\/]three/,
-              },
-              {
                 name: 'ui-vendor',
                 test: /node_modules[\\/](motion|framer-motion|lucide-react)/,
               },

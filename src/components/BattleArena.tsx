@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   ArrowLeft,
@@ -9,14 +9,10 @@ import {
   Flame,
   Heart,
   HelpCircle,
-  Languages,
-  Music,
   Shield,
   ShieldAlert,
   Swords,
   Trophy,
-  Volume2,
-  VolumeX,
   XCircle,
   Zap,
 } from 'lucide-react';
@@ -35,16 +31,12 @@ import {
   playStrikeSound,
   playVictoryFanfare,
 } from '../utils/soundFx';
-import { Battle3DStage } from './Battle3DStage';
 import { SafeImage } from './SafeImage';
 
 interface BattleArenaProps {
   encounter: ActiveEncounter;
   adventurer: AdventurerState;
   medium: Medium;
-  onMediumChange: (medium: Medium) => void;
-  onToggleSound: () => void;
-  onToggleMusic: () => void;
   onComplete: (result: EncounterResult) => void;
   onExit: () => void;
 }
@@ -60,23 +52,20 @@ const MAX_PLAYER_HP = 100;
 
 const HIT_TAUNTS: Array<{ en: string; hi: string }> = [
   { en: 'Ack! Sharp NCERT strike!', hi: 'उफ़! सटीक NCERT प्रहार!' },
-  { en: 'My armor cracks under your combo!', hi: 'तुम्हारे कॉम्बो से मेरा कवच दरक गया!' },
-  { en: 'Formidable blade! Ready for my next trap?', hi: 'तेज़ वार! पर अगले गूढ़ प्रश्न से बचकर दिखाओ!' },
+  { en: 'My armor cracks under your combo!', hi: 'तुम्हारे कॉम्बो से मेरा कवच टूट गया!' },
+  { en: 'Fast hit! Ready for the next trap?', hi: 'तेज़ वार! अगले प्रश्न से बचकर दिखाओ!' },
 ];
 
 const MISS_TAUNTS: Array<{ en: string; hi: string }> = [
-  { en: 'Walked right into my board trap!', hi: 'तुम मेरे बोर्ड जाल में फँस गए!' },
+  { en: 'Haha! Right into my board trap!', hi: 'हाहा! मेरे बोर्ड जाल में फँस गए!' },
   { en: 'Feel that −25 HP counter-slash!', hi: 'यह लो −25 HP का करारा पलटवार!' },
-  { en: 'Revise your NCERT scrolls, challenger!', hi: 'जाओ NCERT के पन्ने फिर से पढ़ो, योद्धा!' },
+  { en: 'Revise your NCERT notes, challenger!', hi: 'जाओ NCERT के नोट्स फिर से पढ़ो!' },
 ];
 
 export function BattleArena({
   encounter,
   adventurer,
   medium,
-  onMediumChange,
-  onToggleSound,
-  onToggleMusic,
   onComplete,
   onExit,
 }: BattleArenaProps) {
@@ -99,8 +88,8 @@ export function BattleArena({
   const [bossTaunt, setBossTaunt] = useState<BossTauntState>({
     id: 1,
     text: {
-      en: 'Show me your NCERT mastery before the clock strikes zero!',
-      hi: 'समय शून्य होने से पहले अपनी NCERT तैयारी दिखाओ!',
+      en: 'Show me your NCERT mastery before time runs out!',
+      hi: 'समय खत्म होने से पहले अपनी NCERT तैयारी दिखाओ!',
     },
     tone: 'intro',
   });
@@ -121,22 +110,22 @@ export function BattleArena({
   const bossHpPercent = Math.round((bossHP / Math.max(1, bossMaxHP)) * 100);
   const playerHpPercent = Math.max(0, Math.round((playerHP / MAX_PLAYER_HP) * 100));
 
-  const remainingSeconds = Math.max(0, encounter.secondsPerQuestion - questionElapsed);
+  const questionSeconds = Math.min(10, Math.max(10, encounter.secondsPerQuestion || 10));
+  const remainingSeconds = Math.max(0, questionSeconds - questionElapsed);
   const timerPercent = Math.max(
     0,
-    Math.round((remainingSeconds / encounter.secondsPerQuestion) * 100)
+    Math.round((remainingSeconds / questionSeconds) * 100)
   );
-  const isLowTime = !isAnswered && remainingSeconds <= 8;
+  const isLowTime = !isAnswered && remainingSeconds <= 3;
 
-  // Trigger a tactical boss warning when landing on a Tricky Conceptual Trap question
   useEffect(() => {
     if (!currentQ || isAnswered) return;
     if (currentQ.isTricky || currentQ.sourceTag === 'TRICKY 2027') {
       setBossTaunt({
         id: Date.now(),
         text: {
-          en: 'Beware! Tricky Conceptual Trap incoming — read every word!',
-          hi: 'सावधान! गूढ़ अवधारणा जाल आ रहा है — हर शब्द ध्यान से पढ़ो!',
+          en: 'Tricky Conceptual Trap incoming — read carefully!',
+          hi: 'सावधान! गूढ़ अवधारणा प्रश्न आ रहा है — ध्यान से पढ़ो!',
         },
         tone: 'tricky',
       });
@@ -246,9 +235,7 @@ export function BattleArena({
         }
         const speedBonus = Math.max(
           0,
-          Math.round(
-            ((encounter.secondsPerQuestion - questionElapsed) / encounter.secondsPerQuestion) * 40
-          )
+          Math.round(((questionSeconds - questionElapsed) / questionSeconds) * 40)
         );
         const comboBonus = Math.min(60, (nextStreak - 1) * 20);
         xpEarned = currentQ.points + speedBonus + comboBonus;
@@ -292,7 +279,7 @@ export function BattleArena({
       currentIndex,
       currentQ,
       damagePerStrike,
-      encounter.secondsPerQuestion,
+      questionSeconds,
       isAnswered,
       maxStreak,
       playerHP,
@@ -301,18 +288,17 @@ export function BattleArena({
     ]
   );
 
-  // Clear sword clash animation burst after 900ms
   useEffect(() => {
     if (!clashEffect) return;
-    const t = window.setTimeout(() => setClashEffect(null), 900);
+    const t = window.setTimeout(() => setClashEffect(null), 850);
     return () => window.clearTimeout(t);
   }, [clashEffect]);
 
   useEffect(() => {
-    if (!isAnswered && questionElapsed >= encounter.secondsPerQuestion) {
+    if (!isAnswered && questionElapsed >= questionSeconds) {
       handleStrikeAnswer(undefined);
     }
-  }, [encounter.secondsPerQuestion, handleStrikeAnswer, isAnswered, questionElapsed]);
+  }, [handleStrikeAnswer, isAnswered, questionElapsed, questionSeconds]);
 
   const handleAdvance = useCallback(() => {
     if (!isAnswered) return;
@@ -334,6 +320,18 @@ export function BattleArena({
     totalCount,
     totalElapsed,
   ]);
+
+  const advanceRef = useRef<() => void>(() => {});
+  advanceRef.current = handleAdvance;
+
+  // Automatic 2-second advance after selecting an answer OR 10-second timeout
+  useEffect(() => {
+    if (!isAnswered) return;
+    const autoNextTimer = window.setTimeout(() => {
+      advanceRef.current();
+    }, 2000);
+    return () => window.clearTimeout(autoNextTimer);
+  }, [isAnswered, currentIndex]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -358,9 +356,9 @@ export function BattleArena({
   const isTrickyQuestion = Boolean(currentQ.isTricky || currentQ.sourceTag === 'TRICKY 2027');
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
-      {/* Top Combat Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <main className="max-w-4xl mx-auto px-3.5 sm:px-6 py-4 space-y-4">
+      {/* Top Bar: Retreat + Stage Progress */}
+      <div className="flex items-center justify-between gap-2">
         {!confirmExit ? (
           <button
             type="button"
@@ -368,145 +366,109 @@ export function BattleArena({
               if (records.length > 0) setConfirmExit(true);
               else onExit();
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-200 bg-[#162033] border border-slate-700 hover:border-slate-500 rounded-lg"
+            className="min-h-[42px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold text-[#181C32] bg-white rounded-xl comic-btn-sm"
           >
-            <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{medium === 'hi' ? 'पीछे हटें' : 'Retreat to Map'}</span>
+            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+            <span>{medium === 'hi' ? 'मैप पर लौटें' : 'Retreat'}</span>
           </button>
         ) : (
-          <div className="inline-flex items-center gap-2 p-1.5 bg-red-950/70 border border-red-700 rounded-lg">
-            <span className="text-xs text-red-100 px-1.5">
-              {medium === 'hi' ? 'युद्ध छोड़ें?' : 'Abandon battle?'}
+          <div className="inline-flex items-center gap-2 p-1.5 bg-[#FFF1F2] border-2 border-[#E11D48] rounded-xl">
+            <span className="text-xs font-bold text-[#181C32] px-1">
+              {medium === 'hi' ? 'छोड़ें?' : 'Quit battle?'}
             </span>
             <button
               type="button"
               onClick={onExit}
-              className="px-2.5 py-1 text-xs font-semibold text-white bg-red-600 rounded"
+              className="min-h-[34px] px-2.5 py-1 text-xs font-extrabold text-white bg-[#E11D48] rounded-lg"
             >
-              {medium === 'hi' ? 'हाँ' : 'Retreat'}
+              {medium === 'hi' ? 'हाँ' : 'Yes'}
             </button>
             <button
               type="button"
               onClick={() => setConfirmExit(false)}
-              className="px-2.5 py-1 text-xs font-semibold text-slate-200 bg-slate-800 rounded"
+              className="min-h-[34px] px-2.5 py-1 text-xs font-extrabold text-[#181C32] bg-white border border-[#181C32] rounded-lg"
             >
-              {medium === 'hi' ? 'लड़ें' : 'Fight On'}
+              {medium === 'hi' ? 'नहीं' : 'Stay'}
             </button>
           </div>
         )}
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => onMediumChange(medium === 'en' ? 'hi' : 'en')}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-200 bg-[#162033] border border-slate-700 hover:border-amber-400 rounded-lg"
+        <div className="flex items-center gap-2 text-xs font-mono font-extrabold tabular-nums">
+          <motion.span
+            key={streak}
+            initial={streak >= 2 ? { scale: 1.25 } : false}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+            className="px-2.5 py-1.5 rounded-xl bg-[#FEF08A] comic-gloss border-2 border-[#181C32] text-[#181C32] inline-flex items-center gap-1"
           >
-            <Languages className="w-3.5 h-3.5 text-amber-400" aria-hidden="true" />
-            <span>{medium === 'en' ? 'हिन्दी माध्यम' : 'English Medium'}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleMusic}
-            aria-label={adventurer.musicEnabled ? 'Mute music' : 'Unmute music'}
-            className={`px-2.5 h-9 rounded-lg bg-[#162033] border text-xs font-semibold flex items-center gap-1.5 ${
-              adventurer.musicEnabled
-                ? 'border-slate-700 text-amber-300'
-                : 'border-slate-700 text-slate-500'
-            }`}
-          >
-            <Music className="w-3.5 h-3.5" aria-hidden="true" />
-            <span className="hidden sm:inline">
-              {adventurer.musicEnabled ? 'BGM' : 'Muted'}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onToggleSound}
-            aria-label={adventurer.soundEnabled ? 'Mute sound' : 'Unmute sound'}
-            className="w-9 h-9 rounded-lg bg-[#162033] border border-slate-700 text-slate-200 flex items-center justify-center"
-          >
-            {adventurer.soundEnabled ? (
-              <Volume2 className="w-4 h-4 text-amber-400" aria-hidden="true" />
-            ) : (
-              <VolumeX className="w-4 h-4 text-slate-500" aria-hidden="true" />
-            )}
-          </button>
+            <Flame className="w-3.5 h-3.5 text-[#F97316]" aria-hidden="true" />
+            {streak}x
+          </motion.span>
+          <span className="px-2.5 py-1.5 rounded-xl bg-white border-2 border-[#181C32] text-[#181C32] inline-flex items-center gap-1">
+            <Trophy className="w-3.5 h-3.5 text-[#EAB308]" aria-hidden="true" />+{totalXP}
+          </span>
         </div>
       </div>
 
-      {/* Combatants Status & Animated 3D Warrior Boss Stage */}
+      {/* 2D Comic Versus Arena Card */}
       <motion.section
-        aria-label="Battle combatants status"
+        aria-label="2D comic battle stage"
         animate={
           clashEffect
             ? clashEffect.outcome === 'miss'
               ? { x: [0, -8, 8, -5, 5, 0] }
-              : { y: [0, -3, 2, 0] }
+              : { y: [0, -4, 2, 0] }
             : { x: 0, y: 0 }
         }
-        transition={{ duration: 0.35 }}
-        className="relative overflow-hidden bg-[#162033] border border-slate-700/80 rounded-xl p-5 sm:p-6 space-y-4"
+        transition={{ duration: 0.3 }}
+        className="relative overflow-hidden comic-card rounded-3xl bg-[#181C32] text-white p-4 space-y-3"
       >
-        {/* Sword Clash Animated Overlay */}
+        {/* Dramatic 2D Comic Clash Overlay */}
         <AnimatePresence>
           {clashEffect && (
             <motion.div
               key={clashEffect.id}
               initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1.06 }}
-              exit={{ opacity: 0, scale: 1.2 }}
-              transition={{ duration: 0.25 }}
-              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-[#0B1220]/55"
+              animate={{ opacity: 1, scale: 1.04 }}
+              exit={{ opacity: 0, scale: 1.15 }}
+              transition={{ duration: 0.22 }}
+              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-[#181C32]/75 px-4"
             >
-              <div className="flex items-center gap-4 px-6 py-3 rounded-2xl bg-[#0B1220]/95 border border-amber-400/70 shadow-2xl">
-                <motion.div
-                  initial={{ rotate: -45, x: -24 }}
-                  animate={{ rotate: 0, x: 0 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 18 }}
-                >
-                  <Swords
-                    className={`w-9 h-9 ${
-                      clashEffect.outcome === 'hit' ? 'text-amber-400' : 'text-red-400'
-                    }`}
-                    aria-hidden="true"
-                  />
-                </motion.div>
-                <div className="text-center">
-                  <p
-                    className={`font-display text-lg font-bold ${
-                      clashEffect.outcome === 'hit' ? 'text-emerald-300' : 'text-red-300'
-                    }`}
-                  >
-                    {clashEffect.outcome === 'hit'
-                      ? medium === 'hi'
-                        ? 'सटीक तलवार प्रहार! −100 बॉस HP'
-                        : 'CRITICAL CLASH! −100 BOSS HP'
-                      : medium === 'hi'
-                        ? 'बॉस का पलटवार! −25 HP'
-                        : 'BOSS COUNTER-SLASH! −25 HP'}
-                  </p>
-                </div>
+              <div
+                className={`px-5 py-3 rounded-2xl border-[3px] border-[#181C32] shadow-[0_6px_0_#181C32] flex items-center gap-3 ${
+                  clashEffect.outcome === 'hit' ? 'bg-[#34D399]' : 'bg-[#FB7185]'
+                } text-[#181C32]`}
+              >
+                <Swords className="w-7 h-7 shrink-0" aria-hidden="true" />
+                <p className="font-display text-base sm:text-lg font-bold">
+                  {clashEffect.outcome === 'hit'
+                    ? medium === 'hi'
+                      ? 'सटीक प्रहार! −100 बॉस HP!'
+                      : 'CRITICAL HIT! −100 BOSS HP!'
+                    : medium === 'hi'
+                      ? 'बॉस पलटवार! −25 HP!'
+                      : 'COUNTER-SLASH! −25 HP!'}
+                </p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-          {/* Left: Player Avatar & HP */}
+        {/* Fighters VS Row */}
+        <div className="grid grid-cols-11 gap-2 items-center">
+          {/* Player Side (5 cols) */}
           <motion.div
             animate={
               clashEffect?.outcome === 'hit'
-                ? { x: [0, 18, 0] }
+                ? { x: [0, 14, 0] }
                 : clashEffect?.outcome === 'miss'
-                  ? { x: [0, -10, 0] }
+                  ? { x: [0, -8, 0] }
                   : { x: 0 }
             }
-            transition={{ duration: 0.32 }}
-            className="md:col-span-5 flex items-center gap-4"
+            transition={{ duration: 0.28 }}
+            className="col-span-5 flex items-center gap-2.5 min-w-0"
           >
-            <div className="w-16 h-16 rounded-xl overflow-hidden border-2 border-sky-400 shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden border-2 border-[#38BDF8] bg-[#FACC15] shrink-0">
               <SafeImage
                 src={playerAvatarSrc}
                 alt={adventurer.heroName}
@@ -514,94 +476,57 @@ export function BattleArena({
                 fallbackTitle={adventurer.heroName}
               />
             </div>
-            <div className="flex-1 min-w-0 space-y-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-display font-bold text-white text-sm sm:text-base truncate">
-                  {adventurer.heroName}
-                </p>
-                <span className="font-mono text-xs font-semibold text-emerald-400 inline-flex items-center gap-1 tabular-nums">
-                  <Heart className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
-                  {playerHP}/100 HP
-                </span>
-              </div>
-              <div className="h-2.5 bg-[#0B1220] rounded-full overflow-hidden border border-slate-700">
+            <div className="flex-1 min-w-0 space-y-1">
+              <p className="font-display font-bold text-xs sm:text-sm text-white truncate">
+                {adventurer.heroName}
+              </p>
+              <div className="h-3 bg-slate-800 rounded-full border border-slate-600 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-200 ${
-                    playerHP > 50 ? 'bg-emerald-500' : playerHP > 25 ? 'bg-amber-400' : 'bg-red-500'
+                  className={`h-full transition-all duration-300 comic-progress-fill ${
+                    playerHP > 50 ? 'bg-[#34D399]' : playerHP > 25 ? 'bg-[#FACC15]' : 'bg-[#FB7185]'
                   }`}
                   style={{ width: `${playerHpPercent}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between text-xs text-slate-400 tabular-nums">
-                <span className="inline-flex items-center gap-1 text-amber-400 font-semibold">
-                  <Flame className="w-3.5 h-3.5" aria-hidden="true" />
-                  {streak}x Combo
-                </span>
-                <span className="inline-flex items-center gap-1 text-sky-300 font-mono font-semibold">
-                  <Trophy className="w-3.5 h-3.5" aria-hidden="true" />+{totalXP} XP
-                </span>
-              </div>
+              <p className="font-mono text-[10px] sm:text-xs font-bold text-[#34D399] inline-flex items-center gap-1 tabular-nums">
+                <Heart className="w-3 h-3 fill-current" aria-hidden="true" />
+                {playerHP}/100 HP
+              </p>
             </div>
           </motion.div>
 
-          {/* Center: Countdown Clock */}
-          <div className="md:col-span-2 flex flex-col items-center justify-center text-center py-2 md:py-0 border-y md:border-y-0 md:border-x border-slate-700/80">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-              {encounter.isBossBattle
-                ? medium === 'hi'
-                  ? 'बॉस टाइमर'
-                  : 'Boss Timer'
-                : medium === 'hi'
-                  ? 'समय'
-                  : 'Timer'}
-            </p>
-            <p
-              className={`font-mono text-2xl sm:text-3xl font-bold tabular-nums mt-0.5 flex items-center gap-1.5 ${
-                isLowTime ? 'text-red-400' : 'text-amber-400'
-              }`}
-            >
-              <Clock className="w-5 h-5" aria-hidden="true" />
-              <span>{remainingSeconds}s</span>
-            </p>
-            <p className="text-xs text-slate-400 font-mono tabular-nums mt-0.5">
-              {currentIndex + 1} / {totalCount}
-            </p>
+          {/* Center VS & Clock (1 col -> 1 span centered) */}
+          <div className="col-span-1 flex flex-col items-center justify-center text-center">
+            <span className="font-display text-xs sm:text-sm font-extrabold text-[#FACC15]">VS</span>
           </div>
 
-          {/* Right: Boss Guardian HP & Portrait */}
+          {/* Boss Side (5 cols) */}
           <motion.div
             animate={
               clashEffect?.outcome === 'hit'
-                ? { x: [0, 10, -8, 6, 0] }
+                ? { x: [0, 8, -6, 0] }
                 : clashEffect?.outcome === 'miss'
-                  ? { x: [0, -18, 0] }
+                  ? { x: [0, -14, 0] }
                   : { x: 0 }
             }
-            transition={{ duration: 0.32 }}
-            className="md:col-span-5 flex items-center gap-4"
+            transition={{ duration: 0.28 }}
+            className="col-span-5 flex items-center gap-2.5 min-w-0 justify-end"
           >
-            <div className="flex-1 min-w-0 space-y-1.5 text-right">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs font-semibold text-red-400 tabular-nums">
-                  {bossHP}/{bossMaxHP} HP
-                </span>
-                <p className="font-display font-bold text-amber-300 text-sm sm:text-base truncate">
-                  {encounter.bossName[medium]}
-                </p>
-              </div>
-              <div className="h-2.5 bg-[#0B1220] rounded-full overflow-hidden border border-slate-700">
+            <div className="flex-1 min-w-0 space-y-1 text-right">
+              <p className="font-display font-bold text-xs sm:text-sm text-[#FACC15] truncate">
+                {encounter.bossName[medium]}
+              </p>
+              <div className="h-3 bg-slate-800 rounded-full border border-slate-600 overflow-hidden">
                 <div
-                  className="h-full bg-red-500 transition-all duration-200 ml-auto"
+                  className="h-full bg-[#FB7185] transition-all duration-300 ml-auto comic-progress-fill"
                   style={{ width: `${bossHpPercent}%` }}
                 />
               </div>
-              <p className="text-xs text-slate-400 truncate">
-                {medium === 'hi'
-                  ? 'सही उत्तर = बॉस पर प्रहार · गलत = −25 HP'
-                  : 'Correct = −100 Boss HP · Wrong = −25 Player HP'}
+              <p className="font-mono text-[10px] sm:text-xs font-bold text-[#FDA4AF] tabular-nums">
+                {bossHP}/{bossMaxHP} HP
               </p>
             </div>
-            <div className="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-amber-500/80 shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden border-2 border-[#FB7185] bg-[#1E1B2E] shrink-0">
               <SafeImage
                 src={BOSS_PORTRAIT}
                 alt={encounter.bossName[medium]}
@@ -612,228 +537,226 @@ export function BattleArena({
           </motion.div>
         </div>
 
-        {/* Realistic 3D Hero vs Armored Warrior Boss Combat Stage */}
-        <Battle3DStage
-          avatarId={adventurer.avatarId}
-          clashEffect={clashEffect}
-          bossHpPercent={bossHpPercent}
-          playerHpPercent={playerHpPercent}
-        />
-
-        {/* Dynamic Boss Taunt Banner */}
+        {/* Speech Bubble Boss Taunt */}
         <motion.div
           key={bossTaunt.id}
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border text-xs sm:text-sm ${
+          className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-2 ${
             bossTaunt.tone === 'hit'
-              ? 'bg-emerald-950/35 border-emerald-700/60 text-emerald-100'
+              ? 'bg-[#064E3B] border-[#34D399] text-[#ECFDF5]'
               : bossTaunt.tone === 'smug'
-                ? 'bg-red-950/40 border-red-700/60 text-red-100'
+                ? 'bg-[#881337] border-[#FB7185] text-[#FFF1F2]'
                 : bossTaunt.tone === 'tricky'
-                  ? 'bg-amber-950/40 border-amber-600/70 text-amber-100'
-                  : 'bg-[#0F172A] border-slate-700 text-slate-200'
+                  ? 'bg-[#78350F] border-[#FACC15] text-[#FEF9C3]'
+                  : 'bg-slate-800 border-slate-600 text-slate-100'
           }`}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="shrink-0" aria-hidden="true">
-              {bossTaunt.tone === 'hit' ? (
-                <Zap className="w-4 h-4 text-emerald-400" />
-              ) : bossTaunt.tone === 'smug' ? (
-                <Flame className="w-4 h-4 text-red-400" />
-              ) : bossTaunt.tone === 'tricky' ? (
-                <ShieldAlert className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Shield className="w-4 h-4 text-sky-400" />
-              )}
-            </span>
-            <p className="truncate">
-              <span className="font-semibold text-amber-300 mr-1.5">
-                {encounter.bossName[medium]}:
-              </span>
-              &ldquo;{bossTaunt.text[medium]}&rdquo;
-            </p>
-          </div>
+          <span className="shrink-0" aria-hidden="true">
+            {bossTaunt.tone === 'hit' ? (
+              <Zap className="w-4 h-4 text-[#34D399]" />
+            ) : bossTaunt.tone === 'smug' ? (
+              <Flame className="w-4 h-4 text-[#FB7185]" />
+            ) : bossTaunt.tone === 'tricky' ? (
+              <ShieldAlert className="w-4 h-4 text-[#FACC15]" />
+            ) : (
+              <Shield className="w-4 h-4 text-[#38BDF8]" />
+            )}
+          </span>
+          <p className="truncate">&ldquo;{bossTaunt.text[medium]}&rdquo;</p>
         </motion.div>
       </motion.section>
 
-      {/* Main Battle Question Card */}
-      <section
-        aria-label="Active combat question"
-        className="bg-[#162033] border border-slate-700/80 rounded-xl p-6 sm:p-8 space-y-6"
-      >
-        {/* Timer Bar */}
-        <div className="h-2 bg-[#0B1220] rounded-full overflow-hidden">
-          <div
-            className={`h-full transition-all duration-300 ${
-              isLowTime ? 'bg-red-500' : 'bg-amber-400'
-            }`}
-            style={{ width: `${timerPercent}%` }}
-          />
-        </div>
-
-        {/* Question Metadata */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-700/80">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 tabular-nums">
-            <span
-              className={`font-semibold inline-flex items-center gap-1 ${
-                isTrickyQuestion ? 'text-rose-400' : 'text-amber-400'
+      {/* Main Tap-to-Answer Question Card */}
+      <section aria-label="Active quiz question" className="comic-card rounded-3xl p-4 sm:p-6 bg-white space-y-4">
+        {/* Timer + Strike Meta */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2 text-xs font-mono font-extrabold tabular-nums">
+            <span className="text-[#181C32]">
+              Q {currentIndex + 1}/{totalCount}
+            </span>
+            <motion.span
+              animate={isLowTime ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+              transition={isLowTime ? { repeat: Infinity, duration: 0.65 } : undefined}
+              className={`px-2.5 py-0.5 rounded-lg border-2 border-[#181C32] inline-flex items-center gap-1 ${
+                isLowTime
+                  ? 'bg-[#FB7185] text-white'
+                  : 'bg-[#FEF08A] text-[#181C32]'
               }`}
             >
-              {isTrickyQuestion && <Brain className="w-3.5 h-3.5" aria-hidden="true" />}
-              {currentQ.sourceTag}
-            </span>
-            <span aria-hidden="true">·</span>
-            <span>{currentQ.ncertChapter[medium]}</span>
-            <span aria-hidden="true">·</span>
-            <span>+{currentQ.points} XP</span>
+              <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{remainingSeconds}s / 10s</span>
+            </motion.span>
           </div>
+
+          <div className="h-3.5 bg-slate-200 rounded-full border-2 border-[#181C32] overflow-hidden">
+            <div
+              className={`h-full transition-all duration-300 comic-progress-fill ${
+                isLowTime ? 'bg-[#E11D48]' : 'bg-[#FACC15]'
+              }`}
+              style={{ width: `${timerPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b-2 border-slate-200 text-xs">
+          <span
+            className={`font-mono font-extrabold inline-flex items-center gap-1 ${
+              isTrickyQuestion ? 'text-[#E11D48]' : 'text-[#2563EB]'
+            }`}
+          >
+            {isTrickyQuestion && <Brain className="w-3.5 h-3.5" aria-hidden="true" />}
+            {currentQ.sourceTag} · {currentQ.ncertChapter[medium]}
+          </span>
 
           {currentQ.hint && !isAnswered && !showHint && (
             <button
               type="button"
               onClick={() => setShowHint(true)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300"
+              className="inline-flex items-center gap-1 text-xs font-extrabold text-[#D97706] hover:underline"
             >
               <HelpCircle className="w-4 h-4" aria-hidden="true" />
-              <span>{medium === 'hi' ? 'संकेत स्क्रॉल खोलें' : 'Reveal Scroll Hint'}</span>
+              <span>{medium === 'hi' ? 'संकेत देखें' : 'Hint'}</span>
             </button>
           )}
         </div>
 
-        {/* Question Prompt */}
-        <h2 className="text-lg sm:text-xl font-semibold text-white leading-relaxed">
+        <h2 className="text-base sm:text-lg font-bold text-[#181C32] leading-snug">
           {currentQ.prompt[medium]}
         </h2>
 
         {showHint && currentQ.hint && !isAnswered && (
-          <div className="p-3.5 rounded-lg bg-[#0F172A] border border-amber-500/40 text-xs sm:text-sm text-amber-100">
-            <span className="font-semibold text-amber-400">
+          <div className="p-3 rounded-2xl bg-[#FFFBEB] border-2 border-[#181C32] text-xs font-semibold text-[#181C32]">
+            <strong className="text-[#D97706]">
               {medium === 'hi' ? 'संकेत: ' : 'Hint: '}
-            </span>
+            </strong>
             {currentQ.hint[medium]}
           </div>
         )}
 
-        {/* 4 Combat Strike Option Buttons */}
-        <div role="radiogroup" aria-label="Battle answers" className="grid grid-cols-1 gap-3">
+        {/* 4 Big Thumb-Friendly Tap Option Cards */}
+        <div role="radiogroup" aria-label="Battle answers" className="grid grid-cols-1 gap-2.5">
           {currentQ.options.map((opt, idx) => {
             const isSelected = currentRecord?.selectedIndex === idx;
             const isCorrectOpt = currentQ.correctIndex === idx;
 
-            let btnStyle =
-              'border-slate-700 bg-[#0F172A] text-slate-100 hover:border-amber-400 hover:bg-slate-800';
-            let badgeStyle = 'border-slate-600 bg-slate-800 text-slate-200';
-            let statusLabel: string | null = null;
+            let cardStyle = 'bg-[#F8FAFF] hover:bg-[#EFF6FF] text-[#181C32]';
+            let badgeStyle = 'bg-white text-[#181C32]';
 
             if (isAnswered) {
               if (isCorrectOpt) {
-                btnStyle = 'border-emerald-500 bg-emerald-950/60 text-white';
-                badgeStyle = 'border-emerald-500 bg-emerald-600 text-white';
-                statusLabel = medium === 'hi' ? 'सही प्रहार' : 'Critical Hit';
+                cardStyle = 'bg-[#A7F3D0] text-[#181C32]';
+                badgeStyle = 'bg-[#059669] text-white';
               } else if (isSelected && !isCorrectOpt) {
-                btnStyle = 'border-red-500 bg-red-950/60 text-white';
-                badgeStyle = 'border-red-500 bg-red-600 text-white';
-                statusLabel = medium === 'hi' ? 'चूक गए' : 'Missed';
+                cardStyle = 'bg-[#FECDD3] text-[#181C32]';
+                badgeStyle = 'bg-[#E11D48] text-white';
               } else {
-                btnStyle = 'border-slate-800 bg-[#0B1220] text-slate-500';
+                cardStyle = 'bg-slate-100 text-slate-400 opacity-75';
               }
             }
 
             return (
-              <motion.button
+              <button
                 key={`${currentQ.id}-opt-${idx}`}
-                whileTap={!isAnswered ? { scale: 0.99 } : undefined}
                 type="button"
                 disabled={isAnswered}
                 onClick={() => handleStrikeAnswer(idx)}
-                className={`w-full min-h-[56px] flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${btnStyle}`}
+                className={`w-full min-h-[56px] flex items-center justify-between gap-3 px-3.5 py-3 rounded-2xl text-left comic-btn-sm comic-gloss ${cardStyle}`}
               >
-                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`w-7 h-7 rounded-lg border font-mono text-xs font-bold flex items-center justify-center shrink-0 ${badgeStyle}`}
+                    className={`w-8 h-8 rounded-xl border-2 border-[#181C32] font-mono text-xs font-extrabold flex items-center justify-center shrink-0 ${badgeStyle}`}
                   >
                     {OPTION_LETTERS[idx]}
                   </span>
-                  <span className="text-sm sm:text-base font-medium leading-snug">
+                  <span className="text-sm sm:text-base font-bold leading-snug">
                     {opt[medium]}
                   </span>
                 </div>
 
-                {statusLabel && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold shrink-0 whitespace-nowrap">
+                {isAnswered && (isCorrectOpt || isSelected) && (
+                  <span className="shrink-0">
                     {isCorrectOpt ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+                      <CheckCircle2 className="w-5 h-5 text-[#059669]" aria-hidden="true" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-red-400" aria-hidden="true" />
+                      <XCircle className="w-5 h-5 text-[#E11D48]" aria-hidden="true" />
                     )}
-                    <span className={isCorrectOpt ? 'text-emerald-300' : 'text-red-300'}>
-                      {statusLabel}
-                    </span>
                   </span>
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </div>
 
-        {/* Combat Outcome & Explanation */}
+        {/* Answer Explanation & Next Button */}
         {isAnswered && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             role="status"
-            className={`p-5 rounded-xl border space-y-3 ${
-              currentRecord.isCorrect
-                ? 'bg-emerald-950/40 border-emerald-700/70'
-                : 'bg-red-950/35 border-red-800/70'
+            className={`p-4 rounded-2xl border-2 border-[#181C32] space-y-3 ${
+              currentRecord.isCorrect ? 'bg-[#ECFDF5]' : 'bg-[#FFF1F2]'
             }`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                {currentRecord.isCorrect ? (
-                  <Swords className="w-5 h-5 text-emerald-400 shrink-0" aria-hidden="true" />
-                ) : (
-                  <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" aria-hidden="true" />
-                )}
-                <p className="text-sm font-bold text-white">
-                  {currentRecord.isCorrect
+            <div className="flex items-center justify-between gap-2 text-xs font-extrabold">
+              <span className={currentRecord.isCorrect ? 'text-[#059669]' : 'text-[#E11D48]'}>
+                {currentRecord.isCorrect
+                  ? medium === 'hi'
+                    ? 'सही प्रहार!'
+                    : 'DIRECT STRIKE!'
+                  : currentRecord.selectedIndex === undefined
                     ? medium === 'hi'
-                      ? 'सटीक प्रहार! बॉस को भारी क्षति!'
-                      : 'Direct Strike! Boss takes −100 HP!'
-                    : currentRecord.selectedIndex === undefined
-                      ? medium === 'hi'
-                        ? `समय समाप्त! बॉस का पलटवार (−25 HP) · सही उत्तर: ${OPTION_LETTERS[currentQ.correctIndex]}`
-                        : `Time Expired! Boss counter-attacks (−25 HP) · Answer: ${OPTION_LETTERS[currentQ.correctIndex]}`
-                      : medium === 'hi'
-                        ? `गलत उत्तर! (−25 HP) · सही विकल्प: ${OPTION_LETTERS[currentQ.correctIndex]}`
-                        : `Counter-Attack! (−25 Player HP) · Answer: ${OPTION_LETTERS[currentQ.correctIndex]}`}
-                </p>
-              </div>
-
-              <span className="font-mono text-xs font-bold text-amber-400 tabular-nums">
+                      ? `समय समाप्त! सही उत्तर: ${OPTION_LETTERS[currentQ.correctIndex]}`
+                      : `TIME UP! Answer: ${OPTION_LETTERS[currentQ.correctIndex]}`
+                    : medium === 'hi'
+                      ? `गलत! सही उत्तर: ${OPTION_LETTERS[currentQ.correctIndex]}`
+                      : `MISSED! Answer: ${OPTION_LETTERS[currentQ.correctIndex]}`}
+              </span>
+              <span className="font-mono text-[#D97706] tabular-nums">
                 {currentRecord.isCorrect ? `+${currentRecord.xpEarned} XP` : '+0 XP'}
               </span>
             </div>
 
-            <p className="text-sm text-slate-200 leading-relaxed">
+            <p className="text-xs sm:text-sm font-medium text-[#181C32] leading-relaxed">
               {currentQ.explanation[medium]}
             </p>
 
-            <div className="pt-1 flex justify-end">
+            {/* 2-Second Auto-Next Progress Bar + Fast Skip */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between text-[11px] font-mono font-bold text-[#2563EB]">
+                <span>
+                  {playerHP <= 0 || currentIndex >= totalCount - 1
+                    ? medium === 'hi'
+                      ? '2 सेकंड में परिणाम खुल रहा है...'
+                      : 'Loading results in 2s...'
+                    : medium === 'hi'
+                      ? '2 सेकंड में अगला प्रश्न...'
+                      : 'Auto-next in 2s...'}
+                </span>
+                <span>2.0s</span>
+              </div>
+              <div className="h-2.5 bg-white rounded-full border-2 border-[#181C32] overflow-hidden">
+                <motion.div
+                  key={`autonext-${currentQ.id}`}
+                  initial={{ scaleX: 1 }}
+                  animate={{ scaleX: 0 }}
+                  transition={{ duration: 2, ease: 'linear' }}
+                  className="h-full w-full origin-left bg-[#2563EB] comic-progress-fill"
+                />
+              </div>
               <button
                 type="button"
                 onClick={handleAdvance}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors whitespace-nowrap"
+                className="w-full min-h-[46px] inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-[#181C32] bg-[#FACC15] hover:bg-[#FDE047] rounded-2xl comic-btn-sm comic-gloss"
               >
                 <span>
                   {playerHP <= 0 || currentIndex >= totalCount - 1
                     ? medium === 'hi'
-                      ? 'युद्ध परिणाम देखें'
-                      : 'Finish Battle & Claim XP'
+                      ? 'अभी परिणाम देखें'
+                      : 'SEE RESULTS NOW'
                     : medium === 'hi'
-                      ? 'अगला प्रहार'
-                      : 'Next Strike'}
+                      ? 'अभी अगला प्रश्न →'
+                      : 'NEXT NOW'}
                 </span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </button>

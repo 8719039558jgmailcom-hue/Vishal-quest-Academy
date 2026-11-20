@@ -119,8 +119,8 @@ const NCERT_REACTIONS: NcertReactionRecipe[] = [
       hi: 'द्विविस्थापन अभिक्रिया (BaSO₄ अवक्षेप)',
     },
     equation: 'BaCl₂(aq) + Na₂SO₄(aq) → BaSO₄↓ (White) + 2NaCl(aq)',
-    resultColor: '#64748B',
-    precipitate: { color: '#F8FAFC', label: 'BaSO₄↓ White Solid' },
+    resultColor: '#94A3B8',
+    precipitate: { color: '#FFFFFF', label: 'BaSO₄↓ White Solid' },
     phValue: 7.0,
     tempC: 26,
     observation: {
@@ -155,7 +155,7 @@ const NCERT_REACTIONS: NcertReactionRecipe[] = [
       hi: 'लोहे द्वारा कॉपर विस्थापन (नीला → हल्का हरा)',
     },
     equation: 'Fe(s) + CuSO₄(aq) → FeSO₄(aq) + Cu↓(s)',
-    resultColor: '#10B981',
+    resultColor: '#34D399',
     precipitate: { color: '#D97706', label: 'Cu↓ Brown Deposit' },
     phValue: 6.1,
     tempC: 29,
@@ -190,8 +190,8 @@ const NCERT_REACTIONS: NcertReactionRecipe[] = [
       hi: 'सिल्वर हैलाइड परीक्षण (दही-जैसा सफेद AgCl↓)',
     },
     equation: '2AgNO₃(aq) + BaCl₂(aq) → 2AgCl↓ + Ba(NO₃)₂',
-    resultColor: '#94A3B8',
-    precipitate: { color: '#F1F5F9', label: 'AgCl↓ Curdy White' },
+    resultColor: '#CBD5E1',
+    precipitate: { color: '#FFFFFF', label: 'AgCl↓ Curdy White' },
     phValue: 6.8,
     tempC: 26,
     observation: {
@@ -299,7 +299,7 @@ export function ChemistryBeakerLab({
         ? secondReagent.color
         : firstReagent
           ? firstReagent.color
-          : '#0EA5E9';
+          : '#38BDF8';
 
   const fillPercent = selectedIds.length === 0 ? 0 : selectedIds.length === 1 ? 38 : 74;
 
@@ -318,14 +318,14 @@ export function ChemistryBeakerLab({
   const phCategory =
     displayPH < 6.5
       ? medium === 'hi'
-        ? 'अम्लीय (Acidic)'
+        ? 'अम्लीय'
         : 'Acidic'
       : displayPH > 7.5
         ? medium === 'hi'
-          ? 'क्षारीय (Basic)'
+          ? 'क्षारीय'
           : 'Alkaline'
         : medium === 'hi'
-          ? 'उदासीन (Neutral)'
+          ? 'उदासीन'
           : 'Neutral';
 
   const relevantRecipes = NCERT_REACTIONS.filter(
@@ -335,79 +335,72 @@ export function ChemistryBeakerLab({
   return (
     <section
       aria-labelledby="beaker-lab-heading"
-      className="bg-[#162033] border border-slate-700/80 rounded-xl p-6 space-y-6"
+      className="comic-card rounded-3xl p-4 sm:p-6 bg-white space-y-5"
     >
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-700/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b-2 border-slate-200">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-400/50 flex items-center justify-center shrink-0">
-            <FlaskConical className="w-5 h-5 text-sky-400" aria-hidden="true" />
+          <div className="w-11 h-11 rounded-2xl bg-[#A7F3D0] border-2 border-[#181C32] shadow-[0_2px_0_#181C32] flex items-center justify-center shrink-0">
+            <FlaskConical className="w-5 h-5 text-[#181C32]" aria-hidden="true" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-amber-400">
-              {medium === 'hi'
-                ? 'इंटरैक्टिव वर्चुअल रसायन प्रयोगशाला'
-                : 'Interactive Virtual Beaker Mixing Minigame'}
+            <p className="text-[11px] font-mono font-extrabold text-[#059669]">
+              {medium === 'hi' ? 'वर्चुअल बीकर प्रयोगशाला' : 'VIRTUAL BEAKER MINI-GAME'}
             </p>
-            <h2 id="beaker-lab-heading" className="font-display text-xl font-bold text-white">
+            <h2 id="beaker-lab-heading" className="font-display text-lg sm:text-xl font-bold text-[#181C32]">
               {medium === 'hi'
-                ? 'रसायन मिलाएँ और NCERT अभिक्रिया देखें (+30 XP प्रति खोज)'
-                : 'Mix Reagents & Discover Real NCERT Reactions (+30 XP Each)'}
+                ? 'रसायन मिलाएँ (+30 XP प्रति खोज)'
+                : 'Mix Reagents & Discover Reactions (+30 XP)'}
             </h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xs text-emerald-300 tabular-nums">
-            {discoveredIds.length}/{NCERT_REACTIONS.length}{' '}
-            {medium === 'hi' ? 'अभिक्रियाएँ खोजीं' : 'Reactions Discovered'}
+        <div className="flex items-center gap-2.5">
+          <span className="font-mono text-xs font-extrabold text-[#059669] tabular-nums">
+            {discoveredIds.length}/{NCERT_REACTIONS.length}
           </span>
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-[#0F172A] border border-slate-700 hover:border-amber-400 rounded-lg"
+            className="min-h-[40px] inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold text-[#181C32] bg-[#F8FAFF] rounded-xl comic-btn-sm"
           >
             <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{medium === 'hi' ? 'बीकर खाली करें' : 'Reset Beaker'}</span>
+            <span>{medium === 'hi' ? 'खाली करें' : 'Reset'}</span>
           </button>
         </div>
       </div>
 
-      {/* Two-Zone Sandbox: Animated Beaker Stage (Left 5) + Reagent Shelf & Recipes (Right 7) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Left: Live SVG Beaker & Sensors */}
-        <div className="lg:col-span-5 bg-[#0B1220] border border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-5">
-          {/* Telemetry Bar */}
-          <div className="flex items-center justify-between gap-3 text-xs font-mono">
-            <span className="text-sky-300 tabular-nums">
-              pH: <strong>{displayPH.toFixed(1)}</strong> · {phCategory}
+      {/* Interactive Beaker Stage + Shelf */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Beaker Stage */}
+        <div className="lg:col-span-5 bg-[#EFF6FF] border-2 border-[#181C32] rounded-2xl p-4 flex flex-col justify-between gap-4">
+          <div className="flex items-center justify-between gap-2 text-xs font-mono font-bold">
+            <span className="text-[#1D4ED8] tabular-nums">
+              pH {displayPH.toFixed(1)} · {phCategory}
             </span>
-            <span className="inline-flex items-center gap-1 text-amber-300 tabular-nums">
-              <Thermometer className="w-3.5 h-3.5" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1 text-[#B45309] tabular-nums">
+              <Thermometer className="w-4 h-4" aria-hidden="true" />
               {displayTemp}°C
             </span>
           </div>
 
-          {/* Animated Glass Beaker SVG */}
-          <div className="relative flex items-center justify-center py-2">
-            <svg viewBox="0 0 220 220" className="w-52 h-52" role="img" aria-label="Interactive virtual chemical beaker">
+          <div className="relative flex items-center justify-center py-1">
+            <svg viewBox="0 0 220 220" className="w-44 h-44 sm:w-48 sm:h-48" role="img" aria-label="Interactive virtual chemical beaker">
               <defs>
-                <clipPath id="beaker-interior">
+                <clipPath id="comic-beaker-interior">
                   <path d="M 60 44 L 60 176 Q 60 190 74 190 L 146 190 Q 160 190 160 176 L 160 44 Z" />
                 </clipPath>
               </defs>
 
-              {/* Beaker back interior */}
               <path
                 d="M 54 36 L 60 44 L 60 176 Q 60 190 74 190 L 146 190 Q 160 190 160 176 L 160 44 L 166 36"
-                fill="#0F172A"
-                stroke="#475569"
-                strokeWidth="3"
+                fill="#FFFFFF"
+                stroke="#181C32"
+                strokeWidth="4.5"
                 strokeLinejoin="round"
               />
 
-              {/* Animated Liquid Fill inside clipped beaker */}
-              <g clipPath="url(#beaker-interior)">
+              <g clipPath="url(#comic-beaker-interior)">
                 <motion.rect
                   x="56"
                   width="108"
@@ -417,26 +410,25 @@ export function ChemistryBeakerLab({
                     height: (fillPercent / 100) * 138,
                     fill: liquidColor,
                   }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  fillOpacity="0.72"
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  fillOpacity="0.88"
                 />
 
-                {/* Top meniscus shimmer */}
                 {fillPercent > 0 && (
                   <motion.ellipse
                     cx="110"
                     rx="48"
-                    ry="4"
+                    ry="4.5"
                     initial={false}
                     animate={{
                       cy: 190 - (fillPercent / 100) * 138,
                       fill: liquidColor,
                     }}
-                    fillOpacity="0.95"
+                    stroke="#181C32"
+                    strokeWidth="2"
                   />
                 )}
 
-                {/* Gas Effervescence Bubbles when gas reaction happens */}
                 <AnimatePresence>
                   {activeReaction?.gas && stirred && (
                     <>
@@ -444,15 +436,16 @@ export function ChemistryBeakerLab({
                         <motion.circle
                           key={`bubble-${pourPulse}-${i}`}
                           cx={bx}
-                          r={3 + (i % 3)}
-                          fill="#E0F2FE"
-                          fillOpacity="0.85"
-                          initial={{ cy: 180, opacity: 0.9 }}
-                          animate={{ cy: 60, opacity: 0 }}
+                          r={3.5 + (i % 3)}
+                          fill="#FFFFFF"
+                          stroke="#181C32"
+                          strokeWidth="1.5"
+                          initial={{ cy: 180, opacity: 0.95 }}
+                          animate={{ cy: 55, opacity: 0 }}
                           transition={{
-                            duration: 1.2 + i * 0.18,
+                            duration: 1.1 + i * 0.16,
                             repeat: Infinity,
-                            delay: i * 0.2,
+                            delay: i * 0.18,
                           }}
                         />
                       ))}
@@ -460,105 +453,100 @@ export function ChemistryBeakerLab({
                   )}
                 </AnimatePresence>
 
-                {/* Precipitate Solid Layer at bottom */}
                 {activeReaction?.precipitate && stirred && (
                   <motion.rect
                     x="62"
-                    y="174"
+                    y="173"
                     width="96"
-                    height="15"
+                    height="16"
                     rx="4"
                     initial={{ opacity: 0, y: 165 }}
-                    animate={{ opacity: 0.95, y: 174 }}
-                    transition={{ duration: 0.5 }}
+                    animate={{ opacity: 1, y: 173 }}
+                    transition={{ duration: 0.45 }}
                     fill={activeReaction.precipitate.color}
+                    stroke="#181C32"
+                    strokeWidth="2"
                   />
                 )}
               </g>
 
-              {/* Volume Graduation Markings */}
               {[80, 110, 140, 170].map((yPos, idx) => (
                 <g key={yPos}>
-                  <line x1="65" y1={yPos} x2="80" y2={yPos} stroke="#94A3B8" strokeWidth="1.5" />
-                  <text x="84" y={yPos + 3} fill="#94A3B8" fontSize="9" fontFamily="monospace">
+                  <line x1="65" y1={yPos} x2="80" y2={yPos} stroke="#181C32" strokeWidth="2" />
+                  <text x="84" y={yPos + 3} fill="#181C32" fontSize="9" fontWeight="bold" fontFamily="monospace">
                     {(4 - idx) * 50}mL
                   </text>
                 </g>
               ))}
 
-              {/* Glass Outline Overlay */}
               <path
                 d="M 52 36 L 60 44 L 60 176 Q 60 190 74 190 L 146 190 Q 160 190 160 176 L 160 44 L 168 36"
                 fill="none"
-                stroke="#94A3B8"
-                strokeWidth="3"
+                stroke="#181C32"
+                strokeWidth="4.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
           </div>
 
-          {/* Live Reaction Output Console */}
-          <div className="p-3.5 rounded-lg bg-[#162033] border border-slate-700/80 space-y-1.5 min-h-[88px]">
+          <div className="p-3.5 rounded-xl bg-white border-2 border-[#181C32] space-y-1 min-h-[82px]">
             {selectedIds.length === 0 ? (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs font-semibold text-slate-600">
                 {medium === 'hi'
-                  ? 'अभिक्रिया शुरू करने के लिए दाईं ओर से कोई भी 2 रसायन बीकर में डालें।'
-                  : 'Tap any 2 reagents on the right shelf to pour them into the beaker and test a reaction.'}
+                  ? 'अभिक्रिया देखने के लिए नीचे से कोई भी 2 रसायन चुनें!'
+                  : 'Tap any 2 reagents to pour them into the beaker and test a reaction.'}
               </p>
             ) : selectedIds.length === 1 ? (
-              <p className="text-xs text-sky-200">
-                <strong className="text-amber-300">{firstReagent?.formula}</strong>{' '}
+              <p className="text-xs font-bold text-[#181C32]">
+                <span className="text-[#2563EB]">{firstReagent?.formula}</span>{' '}
                 {medium === 'hi'
-                  ? 'बीकर में डाला गया। अब अभिक्रिया के लिए एक और रसायन चुनें!'
-                  : 'poured! Select a second reagent to react.'}
+                  ? 'डाला गया। अब दूसरा रसायन चुनें!'
+                  : 'loaded! Tap a second reagent to react.'}
               </p>
             ) : activeReaction ? (
               <div className="space-y-1">
-                <p className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                <p className="text-xs font-extrabold text-[#059669] flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{activeReaction.title[medium]}</span>
                 </p>
-                <p className="font-mono text-xs text-amber-300">{activeReaction.equation}</p>
-                <p className="text-xs text-slate-200 leading-relaxed">
+                <p className="font-mono text-xs font-bold text-[#B45309]">
+                  {activeReaction.equation}
+                </p>
+                <p className="text-xs text-slate-700 leading-relaxed">
                   {activeReaction.observation[medium]}
                 </p>
               </div>
             ) : (
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-slate-300">
-                  {medium === 'hi'
-                    ? `${firstReagent?.formula} + ${secondReagent?.formula} — भौतिक मिश्रण (कोई अवक्षेप नहीं)`
-                    : `${firstReagent?.formula} + ${secondReagent?.formula} — Stable Physical Mixture`}
+                <p className="text-xs font-extrabold text-[#181C32]">
+                  {firstReagent?.formula} + {secondReagent?.formula} —{' '}
+                  {medium === 'hi' ? 'सामान्य मिश्रण' : 'Physical Mixture'}
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   {medium === 'hi'
-                    ? 'अवक्षेप या गैस देखने के लिए नीचे दी किसी NCERT अभिक्रिया का प्रयास करें।'
-                    : 'No precipitate or gas evolved. Try pairing reactants from the NCERT missions below!'}
+                    ? 'असली NCERT अभिक्रिया देखने के लिए नीचे दिए चैलेंज टैप करें!'
+                    : 'Try an NCERT Reaction Mission below to see precipitates or gas!'}
                 </p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right: Pourable Reagents + NCERT Discovery Missions */}
-        <div className="lg:col-span-7 flex flex-col justify-between gap-5">
-          <div className="space-y-3">
+        {/* Reagent Shelf & Challenges */}
+        <div className="lg:col-span-7 flex flex-col justify-between gap-4">
+          <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Beaker className="w-4 h-4 text-amber-400" aria-hidden="true" />
-                <span>
-                  {medium === 'hi'
-                    ? 'रसायन शेल्फ (बीकर में डालने के लिए चुनें):'
-                    : 'Reagent Shelf (Tap 2 Bottles to Mix):'}
-                </span>
+              <p className="text-xs font-extrabold text-[#181C32] flex items-center gap-1.5">
+                <Beaker className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+                <span>{medium === 'hi' ? 'रसायन चुनें (2 टैप करें):' : 'Tap 2 Reagents:'}</span>
               </p>
-              <span className="font-mono text-xs text-slate-400 tabular-nums">
-                {selectedIds.length}/2 {medium === 'hi' ? 'चयनित' : 'Loaded'}
+              <span className="font-mono text-xs font-extrabold text-[#2563EB] tabular-nums">
+                {selectedIds.length}/2
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {REAGENTS.map((reagent) => {
                 const isSelected = selectedIds.includes(reagent.id);
                 const disabled = !isSelected && selectedIds.length >= 2;
@@ -568,28 +556,28 @@ export function ChemistryBeakerLab({
                     type="button"
                     disabled={disabled}
                     onClick={() => handlePourReagent(reagent.id)}
-                    className={`p-3 rounded-xl border text-left transition-colors ${
+                    className={`min-h-[64px] p-2.5 rounded-2xl text-left comic-btn-sm ${
                       isSelected
-                        ? 'bg-amber-400/15 border-amber-400 text-white'
+                        ? 'bg-[#FEF08A] text-[#181C32]'
                         : disabled
-                          ? 'bg-[#0B1220] border-slate-800 text-slate-500 opacity-60'
-                          : 'bg-[#0F172A] border-slate-700 hover:border-sky-400 text-slate-100'
+                          ? 'bg-slate-100 text-slate-400 opacity-60'
+                          : 'bg-white hover:bg-[#F8FAFF] text-[#181C32]'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs font-bold text-amber-300">
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="font-mono text-xs font-extrabold text-[#1D4ED8]">
                         {reagent.formula}
                       </span>
                       <span
-                        className="w-3 h-3 rounded-sm border border-slate-500 shrink-0"
+                        className="w-3.5 h-3.5 rounded-md border-2 border-[#181C32] shrink-0"
                         style={{ backgroundColor: reagent.color }}
                         aria-hidden="true"
                       />
                     </div>
-                    <p className="text-xs font-medium text-white truncate mt-1">
+                    <p className="text-xs font-bold text-[#181C32] truncate mt-0.5">
                       {reagent.name[medium]}
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate">
+                    <p className="text-[10px] font-semibold text-slate-500 truncate">
                       {reagent.stateLabel[medium]}
                     </p>
                   </button>
@@ -598,17 +586,16 @@ export function ChemistryBeakerLab({
             </div>
           </div>
 
-          {/* NCERT Class-Focused Guided Experiments */}
-          <div className="space-y-2.5 pt-3 border-t border-slate-700/80">
-            <p className="text-xs font-semibold text-sky-300 flex items-center gap-1.5">
+          <div className="space-y-2 pt-3 border-t-2 border-dashed border-slate-200">
+            <p className="text-xs font-extrabold text-[#059669] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
               <span>
                 {medium === 'hi'
-                  ? `कक्षा ${grade}वीं मुख्य NCERT प्रयोग (क्लिक कर टेस्ट करें):`
-                  : `Class ${grade}th NCERT Reaction Challenges (Click to Test):`}
+                  ? `कक्षा ${grade}वीं NCERT प्रयोग (1-टैप टेस्ट):`
+                  : `Class ${grade}th NCERT Reaction Challenges:`}
               </span>
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {relevantRecipes.map((rec) => {
                 const solved = discoveredIds.includes(rec.id);
                 return (
@@ -616,20 +603,20 @@ export function ChemistryBeakerLab({
                     key={rec.id}
                     type="button"
                     onClick={() => handleLoadRecipeHint(rec)}
-                    className={`p-3 rounded-lg border text-left transition-colors flex items-center justify-between gap-2 ${
-                      solved
-                        ? 'bg-emerald-950/35 border-emerald-700/60 text-emerald-100'
-                        : 'bg-[#0F172A] border-slate-700 hover:border-amber-400 text-slate-200'
+                    className={`min-h-[52px] p-2.5 rounded-xl text-left comic-btn-sm flex items-center justify-between gap-2 ${
+                      solved ? 'bg-[#D1FAE5]' : 'bg-[#F8FAFF] hover:bg-[#EFF6FF]'
                     }`}
                   >
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold truncate">{rec.title[medium]}</p>
-                      <p className="text-[11px] font-mono text-amber-300/90 truncate mt-0.5">
+                      <p className="text-xs font-extrabold text-[#181C32] truncate">
+                        {rec.title[medium]}
+                      </p>
+                      <p className="text-[11px] font-mono font-bold text-[#2563EB] truncate">
                         {rec.reagents.map((id) => REAGENTS.find((r) => r.id === id)?.formula).join(' + ')}
                       </p>
                     </div>
                     {solved && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
+                      <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
                     )}
                   </button>
                 );

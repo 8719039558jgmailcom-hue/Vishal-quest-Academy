@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { BattleArena } from './components/BattleArena';
+import { BottomNavBar } from './components/BottomNavBar';
 import { ChapterQuestMapView } from './components/ChapterQuestMapView';
 import { Footer } from './components/Footer';
 import { GamifiedLoginView, LoginPayload } from './components/GamifiedLoginView';
 import { ActiveView, Header } from './components/Header';
 import { HeroBarracks } from './components/HeroBarracks';
+import { LevelUpModal } from './components/LevelUpModal';
 import { MultiplayerArenaView, MultiplayerTab } from './components/MultiplayerArenaView';
 import {
   PortalTransitionKind,
   PortalTransitionOverlay,
 } from './components/PortalTransitionOverlay';
+import { PracticeDojoView } from './components/PracticeDojoView';
 import { SubjectHubView } from './components/SubjectHubView';
 import { VictoryReport } from './components/VictoryReport';
 import {
@@ -21,6 +24,7 @@ import {
   getChapterNodesForSubject,
   getSubjectRealm,
 } from './data/mpboardIndex';
+import { HeroLevelInfo, getHeroLevelFromXP } from './data/questConfig';
 import { useMultiplayerSocket } from './hooks/useMultiplayerSocket';
 import {
   ActiveEncounter,
@@ -32,11 +36,12 @@ import {
   SubjectId,
 } from './types/quiz';
 import { musicEngine } from './utils/musicEngine';
-import { playPortalTransitionSound } from './utils/soundFx';
+import { shuffleEncounterQuestions } from './utils/shuffleQuiz';
+import { playPortalTransitionSound, playVictoryFanfare } from './utils/soundFx';
 
-const STORAGE_KEY = 'vishal_quest_academy_v3';
-const PREFS_KEY = 'vishal_quest_prefs_v3';
-const SESSION_KEY = 'vishal_quest_session_active';
+const STORAGE_KEY = 'board_quest_v1';
+const PREFS_KEY = 'board_quest_prefs_v1';
+const SESSION_KEY = 'board_quest_session_active';
 
 function makeDefaultHeroId(): string {
   return `hero-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -44,7 +49,7 @@ function makeDefaultHeroId(): string {
 
 const DEFAULT_ADVENTURER: AdventurerState = {
   heroId: makeDefaultHeroId(),
-  heroName: 'Vishal',
+  heroName: 'Player 1',
   passcode: 'MP2027',
   bioTitle: 'MP Board Merit Seeker',
   avatarId: 'arya-knight',
@@ -76,9 +81,7 @@ function getYesterdayDateKey(): string {
 
 function loadAdventurerState(): AdventurerState {
   try {
-    const raw =
-      window.localStorage.getItem(STORAGE_KEY) ||
-      window.localStorage.getItem('vishal_quest_academy_v2');
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_ADVENTURER;
     const parsed = JSON.parse(raw) as Partial<AdventurerState>;
     const today = getLocalDateKey();
@@ -156,15 +159,22 @@ export default function App() {
     loadSessionEntered(loadAdventurerState())
   );
   const [activeView, setActiveView] = useState<ActiveView>('hub');
-  const [multiplayerTab, setMultiplayerTab] = useState<MultiplayerTab>('duels');
+  const [multiplayerTab, setMultiplayerTab] = useState<MultiplayerTab>('leaderboard');
   const [activeEncounter, setActiveEncounter] = useState<ActiveEncounter | null>(null);
   const [activeResult, setActiveResult] = useState<EncounterResult | null>(null);
   const [labDiscoveredReactions, setLabDiscoveredReactions] = useState<string[]>([]);
+  const [levelUpNotice, setLevelUpNotice] = useState<{
+    previousLevel: number;
+    newLevelInfo: HeroLevelInfo;
+    totalXP: number;
+  } | null>(null);
   const [portalTransition, setPortalTransition] = useState<{
     kind: PortalTransitionKind;
     subtitle?: string;
   } | null>(null);
 
+  const adventurerRef = useRef<AdventurerState>(adventurer);
+  adventurerRef.current = adventurer;
   const commitTimerRef = useRef<number | null>(null);
   const hideTimerRef = useRef<number | null>(null);
 
@@ -178,7 +188,6 @@ export default function App() {
     };
   }, []);
 
-  // Start continuous copyright-safe royalty-free adventure BGM on first user interaction
   useEffect(() => {
     const unlockMusic = () => {
       musicEngine.start();
@@ -263,13 +272,11 @@ export default function App() {
     []
   );
 
-  // Sync profile back up when entering and after live multiplayer leaderboard updates
   useEffect(() => {
     if (!isEntered) return;
     syncProfileToServer(adventurer, grade, medium);
   }, [isEntered, grade, medium]);
 
-  // Keep client duelWins & server-awarded duel XP aligned with live leaderboard broadcasts
   useEffect(() => {
     if (!isEntered) return;
     const selfRow = multiplayer.leaderboard.find((e) => e.heroId === adventurer.heroId);
@@ -295,8 +302,8 @@ export default function App() {
       playPortalTransitionSound(adventurer.soundEnabled);
       setPortalTransition({ kind, subtitle });
 
-      const commitDelay = kind === 'leaderboard' ? 280 : 210;
-      const hideDelay = kind === 'leaderboard' ? 560 : 410;
+      const commitDelay = kind === 'leaderboard' ? 240 : 180;
+      const hideDelay = kind === 'leaderboard' ? 460 : 340;
 
       commitTimerRef.current = window.setTimeout(() => {
         commit();
@@ -459,7 +466,7 @@ export default function App() {
     const node = getChapterNodeById(nodeId);
     if (!node) return;
     const realm = getSubjectRealm(node.subjectId);
-    const questions = getChapterNodeQuestions(node);
+    const questions = shuffleEncounterQuestions(getChapterNodeQuestions(node));
     if (questions.length === 0) return;
 
     const subjectNodes = getChapterNodesForSubject(node.grade, node.subjectId);
@@ -480,7 +487,7 @@ export default function App() {
       },
       subtitle: node.chapterCode,
       bossName: node.bossName,
-      secondsPerQuestion: node.secondsPerQuestion,
+      secondsPerQuestion: 10,
       passThresholdPercent: 50,
       questions,
     };
@@ -499,7 +506,9 @@ export default function App() {
 
   const handleStartSubjectBoss = (targetGrade: GradeLevel, targetSubject: SubjectId) => {
     const realm = getSubjectRealm(targetSubject);
-    const questions = buildSubjectBossQuestions(targetGrade, targetSubject);
+    const questions = shuffleEncounterQuestions(
+      buildSubjectBossQuestions(targetGrade, targetSubject)
+    );
     if (questions.length === 0) return;
 
     const bossTitle = targetGrade === '10' ? realm.bossTitle10 : realm.bossTitle12;
@@ -511,15 +520,15 @@ export default function App() {
       battleKind: 'subject-boss',
       isBossBattle: true,
       title: {
-        en: `${realm.name.en} · Subject Final Boss Assessment`,
-        hi: `${realm.name.hi} · अंतिम विषय महाबॉस परीक्षा`,
+        en: `${realm.name.en} · Subject Final Boss`,
+        hi: `${realm.name.hi} · विषय महाबॉस परीक्षा`,
       },
       subtitle: {
-        en: '5-Chapter Combined Raid · PYQs 2023–2027 & Tricky Traps',
-        hi: 'सभी 5 अध्यायों की संयुक्त परीक्षा · PYQ 2023–2027 व गूढ़ प्रश्न',
+        en: 'Combined Raid · PYQs 2023–2027 & Tricky Traps',
+        hi: 'संयुक्त परीक्षा · PYQ 2023–2027 व गूढ़ प्रश्न',
       },
       bossName: bossTitle,
-      secondsPerQuestion: 30,
+      secondsPerQuestion: 10,
       passThresholdPercent: 60,
       questions,
     };
@@ -537,7 +546,7 @@ export default function App() {
   };
 
   const handleStartGrandBoss = (targetGrade: GradeLevel) => {
-    const questions = buildGrandBossQuestions(targetGrade);
+    const questions = shuffleEncounterQuestions(buildGrandBossQuestions(targetGrade));
     if (questions.length === 0) return;
 
     const encounter: ActiveEncounter = {
@@ -555,10 +564,10 @@ export default function App() {
         hi: '10-प्रहार महायुद्ध · PYQ 2023–2027 व गूढ़ अवधारणाएँ',
       },
       bossName: {
-        en: `MPBSE ${targetGrade}th Citadel Sovereign`,
-        hi: `एमपी बोर्ड कक्षा ${targetGrade}वीं महासम्राट`,
+        en: `MPBSE ${targetGrade}th Sovereign`,
+        hi: `एमपी बोर्ड ${targetGrade}वीं महासम्राट`,
       },
-      secondsPerQuestion: 30,
+      secondsPerQuestion: 10,
       passThresholdPercent: 60,
       questions,
     };
@@ -574,28 +583,27 @@ export default function App() {
     );
   };
 
-  const handleLaunchFeaturedBoss = () => {
-    const nodes = getChapterNodesForSubject(grade, subjectId);
-    const nextChapter =
-      nodes.find((n, idx) => {
-        const prevCleared = idx === 0 || (adventurer.clearedStages[nodes[idx - 1].id] ?? 0) > 0;
-        const selfCleared = (adventurer.clearedStages[n.id] ?? 0) > 0;
-        return prevCleared && !selfCleared;
-      }) ?? nodes[0];
-
-    const lastNode = nodes[nodes.length - 1];
-    const allCleared = lastNode && (adventurer.clearedStages[lastNode.id] ?? 0) > 0;
-
-    if (allCleared) {
-      handleStartSubjectBoss(grade, subjectId);
-    } else if (nextChapter) {
-      handleStartChapterNode(nextChapter.id);
+  const checkAndTriggerLevelUp = useCallback((prevXP: number, gainedXP: number, soundEnabled: boolean) => {
+    if (gainedXP <= 0) return;
+    const prevLevel = getHeroLevelFromXP(prevXP);
+    const nextXP = prevXP + gainedXP;
+    const nextLevel = getHeroLevelFromXP(nextXP);
+    if (nextLevel.level > prevLevel.level) {
+      playVictoryFanfare(soundEnabled);
+      setLevelUpNotice({
+        previousLevel: prevLevel.level,
+        newLevelInfo: nextLevel,
+        totalXP: nextXP,
+      });
     }
-  };
+  }, []);
 
   const handleCompleteEncounter = (result: EncounterResult) => {
     const today = getLocalDateKey();
     const yesterday = getYesterdayDateKey();
+    const prevSnap = adventurerRef.current;
+
+    checkAndTriggerLevelUp(prevSnap.totalXP, result.totalXP, prevSnap.soundEnabled);
 
     setAdventurer((prev) => {
       let nextStreak = prev.dailyStreak;
@@ -690,9 +698,11 @@ export default function App() {
         ? 'multiplayer'
         : view === 'barracks'
           ? 'barracks'
-          : view === 'subject-map'
-            ? 'subject-map'
-            : 'hub';
+          : view === 'practice'
+            ? 'practice'
+            : view === 'subject-map'
+              ? 'subject-map'
+              : 'hub';
     triggerPortalTransition(portalKind, () => {
       if (view === 'multiplayer') setMultiplayerTab('duels');
       setActiveView(view);
@@ -720,12 +730,14 @@ export default function App() {
         setGrade(targetGrade);
         setActiveView('hub');
       },
-      medium === 'hi' ? `कक्षा ${targetGrade}वीं लोक` : `Class ${targetGrade}th Realm`
+      medium === 'hi' ? `कक्षा ${targetGrade}वीं` : `Class ${targetGrade}th`
     );
   };
 
   const handleEarnLabXP = (reactionId: string, xp: number) => {
     if (labDiscoveredReactions.includes(reactionId)) return;
+    const prevSnap = adventurerRef.current;
+    checkAndTriggerLevelUp(prevSnap.totalXP, xp, prevSnap.soundEnabled);
     setLabDiscoveredReactions((prev) => [...prev, reactionId]);
     setAdventurer((prev) => {
       const updated = { ...prev, totalXP: prev.totalXP + xp };
@@ -810,29 +822,40 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col adventure-bg text-slate-100">
+    <div className="min-h-screen flex flex-col arcade-bg text-[#181C32] overflow-x-hidden">
       <PortalTransitionOverlay
         activePortal={portalTransition?.kind ?? null}
         medium={medium}
         subtitle={portalTransition?.subtitle}
       />
 
+      <LevelUpModal
+        levelUp={levelUpNotice}
+        medium={medium}
+        onClose={() => setLevelUpNotice(null)}
+      />
+
       <Header
         activeView={activeView}
         medium={medium}
+        totalXP={adventurer.totalXP}
+        dailyStreak={adventurer.dailyStreak}
+        soundEnabled={adventurer.soundEnabled}
+        musicEnabled={adventurer.musicEnabled}
+        onMediumChange={setMedium}
+        onToggleSound={handleToggleSound}
+        onToggleMusic={handleToggleMusic}
         onNavigate={handleNavigate}
-        onJumpToGradeHub={handleJumpToGradeHub}
-        onLaunchFeaturedBoss={handleLaunchFeaturedBoss}
       />
 
       <div className="flex-1">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${activeView}-${activeView === 'subject-map' ? subjectId : grade}`}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
           >
             {activeView === 'battle' && activeEncounter ? (
               <BattleArena
@@ -840,9 +863,6 @@ export default function App() {
                 encounter={activeEncounter}
                 adventurer={adventurer}
                 medium={medium}
-                onMediumChange={setMedium}
-                onToggleSound={handleToggleSound}
-                onToggleMusic={handleToggleMusic}
                 onComplete={handleCompleteEncounter}
                 onExit={() =>
                   handleNavigate(
@@ -854,10 +874,19 @@ export default function App() {
               <VictoryReport
                 result={activeResult}
                 medium={medium}
-                onMediumChange={setMedium}
                 onReplay={handleReplayEncounter}
                 onEnterNextChapter={handleEnterNextChapter}
                 onBackToMap={handleBackFromBattleOrResults}
+              />
+            ) : activeView === 'practice' ? (
+              <PracticeDojoView
+                grade={grade}
+                onGradeChange={setGrade}
+                medium={medium}
+                adventurer={adventurer}
+                onStartChapterNode={handleStartChapterNode}
+                onStartSubjectBoss={handleStartSubjectBoss}
+                onEarnLabXP={handleEarnLabXP}
               />
             ) : activeView === 'multiplayer' ? (
               <MultiplayerArenaView
@@ -904,7 +933,6 @@ export default function App() {
                 subjectId={subjectId}
                 medium={medium}
                 adventurer={adventurer}
-                onMediumChange={setMedium}
                 onBackToHub={() => handleNavigate('hub')}
                 onSwitchSubject={(nextSub) => handleOpenSubjectMap(nextSub)}
                 onStartChapterNode={handleStartChapterNode}
@@ -916,14 +944,12 @@ export default function App() {
                 grade={grade}
                 onGradeChange={setGrade}
                 medium={medium}
-                onMediumChange={setMedium}
                 adventurer={adventurer}
                 onlineCount={multiplayer.onlineCount}
-                onToggleSound={handleToggleSound}
-                onToggleMusic={handleToggleMusic}
                 onOpenBarracks={() => handleNavigate('barracks')}
                 onOpenMultiplayer={handleOpenMultiplayer}
                 onOpenLeaderboard={handleOpenLeaderboard}
+                onOpenPractice={() => handleNavigate('practice')}
                 onOpenSubjectMap={handleOpenSubjectMap}
                 onStartGrandBoss={handleStartGrandBoss}
               />
@@ -933,9 +959,17 @@ export default function App() {
       </div>
 
       <Footer
+        activeView={activeView}
         medium={medium}
         onNavigate={handleNavigate}
         onJumpToGradeHub={handleJumpToGradeHub}
+        onOpenLeaderboard={handleOpenLeaderboard}
+      />
+
+      <BottomNavBar
+        activeView={activeView}
+        medium={medium}
+        onNavigate={handleNavigate}
         onOpenLeaderboard={handleOpenLeaderboard}
       />
     </div>

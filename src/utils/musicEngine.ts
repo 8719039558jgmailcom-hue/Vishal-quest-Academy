@@ -23,6 +23,9 @@ class AdventureMusicEngine {
     { bass: 55.0, pad: [110.0, 164.81, 220.0, 293.66], arp: [220.0, 293.66, 329.63, 440.0, 392.0, 329.63] },
   ];
 
+  private readonly defaultVolume = 0.38;
+  private compressor: DynamicsCompressorNode | null = null;
+
   private ensureContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
     if (!this.ctx) {
@@ -32,8 +35,17 @@ class AdventureMusicEngine {
       if (!Ctor) return null;
       this.ctx = new Ctor();
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = this.isMuted ? 0 : 0.14;
-      this.masterGain.connect(this.ctx.destination);
+      this.masterGain.gain.value = this.isMuted ? 0 : this.defaultVolume;
+
+      this.compressor = this.ctx.createDynamicsCompressor();
+      this.compressor.threshold.setValueAtTime(-16, this.ctx.currentTime);
+      this.compressor.knee.setValueAtTime(18, this.ctx.currentTime);
+      this.compressor.ratio.setValueAtTime(4, this.ctx.currentTime);
+      this.compressor.attack.setValueAtTime(0.005, this.ctx.currentTime);
+      this.compressor.release.setValueAtTime(0.18, this.ctx.currentTime);
+
+      this.masterGain.connect(this.compressor);
+      this.compressor.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
@@ -43,10 +55,16 @@ class AdventureMusicEngine {
 
   public setMuted(muted: boolean): void {
     this.isMuted = muted;
+    if (!muted) {
+      this.ensureContext();
+      if (!this.isPlaying) {
+        this.start();
+      }
+    }
     if (this.ctx && this.masterGain) {
       const now = this.ctx.currentTime;
       this.masterGain.gain.cancelScheduledValues(now);
-      this.masterGain.gain.setTargetAtTime(muted ? 0 : 0.14, now, 0.08);
+      this.masterGain.gain.setTargetAtTime(muted ? 0 : this.defaultVolume, now, 0.08);
     }
   }
 
@@ -55,7 +73,10 @@ class AdventureMusicEngine {
   }
 
   public start(): void {
-    if (this.isPlaying) return;
+    if (this.isPlaying) {
+      this.ensureContext();
+      return;
+    }
     const ctx = this.ensureContext();
     if (!ctx) return;
     this.isPlaying = true;
@@ -104,12 +125,12 @@ class AdventureMusicEngine {
           osc.detune.setValueAtTime((idx - 1) * 4, now);
 
           filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(this.mood === 'battle' ? 880 : 620, now);
+          filter.frequency.setValueAtTime(this.mood === 'battle' ? 980 : 720, now);
 
-          const peak = this.mood === 'leaderboard' ? 0.095 : 0.075;
+          const peak = this.mood === 'leaderboard' ? 0.14 : 0.115;
           gain.gain.setValueAtTime(0.0001, now);
-          gain.gain.linearRampToValueAtTime(peak, now + 0.35);
-          gain.gain.exponentialRampToValueAtTime(0.0008, now + dur);
+          gain.gain.linearRampToValueAtTime(peak, now + 0.28);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
 
           osc.connect(filter);
           filter.connect(gain);
@@ -121,10 +142,10 @@ class AdventureMusicEngine {
         // Deep orchestral bass anchor
         const bassOsc = ctx.createOscillator();
         const bassGain = ctx.createGain();
-        bassOsc.type = 'sine';
+        bassOsc.type = 'triangle';
         bassOsc.frequency.setValueAtTime(chord.bass, now);
         bassGain.gain.setValueAtTime(0.0001, now);
-        bassGain.gain.linearRampToValueAtTime(0.14, now + 0.14);
+        bassGain.gain.linearRampToValueAtTime(0.22, now + 0.1);
         bassGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
         bassOsc.connect(bassGain);
         bassGain.connect(dest);
@@ -132,7 +153,7 @@ class AdventureMusicEngine {
         bassOsc.stop(now + dur + 0.05);
       }
 
-      // 2. Gentle medieval harp/lute arpeggio shimmer
+      // 2. Crisp arcade harp/lute arpeggio shimmer
       const arpFreq = chord.arp[subStep % chord.arp.length];
       if (arpFreq) {
         const harp = ctx.createOscillator();
@@ -141,12 +162,12 @@ class AdventureMusicEngine {
         harp.type = this.mood === 'battle' ? 'triangle' : 'sine';
         harp.frequency.setValueAtTime(arpFreq, now);
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(this.mood === 'battle' ? 1600 : 1200, now);
+        filter.frequency.setValueAtTime(this.mood === 'battle' ? 1850 : 1400, now);
 
-        const amp = this.mood === 'explore' ? 0.055 : 0.07;
+        const amp = this.mood === 'explore' ? 0.095 : 0.125;
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.linearRampToValueAtTime(amp, now + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.52);
+        gain.gain.linearRampToValueAtTime(amp, now + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.52);
 
         harp.connect(filter);
         filter.connect(gain);
@@ -160,14 +181,14 @@ class AdventureMusicEngine {
         const drum = ctx.createOscillator();
         const drumGain = ctx.createGain();
         drum.type = 'sine';
-        drum.frequency.setValueAtTime(subStep === 0 ? 115 : 88, now);
-        drum.frequency.exponentialRampToValueAtTime(42, now + 0.14);
-        drumGain.gain.setValueAtTime(subStep === 0 ? 0.15 : 0.09, now);
-        drumGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        drum.frequency.setValueAtTime(subStep === 0 ? 120 : 92, now);
+        drum.frequency.exponentialRampToValueAtTime(42, now + 0.15);
+        drumGain.gain.setValueAtTime(subStep === 0 ? 0.24 : 0.15, now);
+        drumGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
         drum.connect(drumGain);
         drumGain.connect(dest);
         drum.start(now);
-        drum.stop(now + 0.2);
+        drum.stop(now + 0.22);
       }
     } catch {
       // Ignore Web Audio restriction errors before interaction

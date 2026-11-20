@@ -1,29 +1,29 @@
 import { ChapterNodeDefinition } from '../types/quiz';
 
 // Complete Class 10th New MP Board NCERT Syllabus Nodes (Zero Skipped Chapters)
-// Organized by official NCERT books & subsections, each with dedicated Topic Study Notes.
+// Every subject is split into individual playable & sequentially unlockable chapter levels with dedicated NCERT notes & >= 3 MCQs each.
 export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
-  // ==================== CLASS 10 · HINDI ====================
+  // ==================== CLASS 10 · HINDI (9 STAGES) ====================
   {
     id: '10-hi-k1',
     grade: '10',
     subjectId: 'hindi',
     subsectionId: 'kavya-khand',
     order: 1,
-    chapterCode: { en: 'Kshitij-2 Kavya · Ch. 1–2', hi: 'क्षितिज-2 काव्य · पाठ 1–2' },
+    chapterCode: { en: 'Kshitij-2 Kavya · Ch. 1', hi: 'क्षितिज-2 काव्य · पाठ 1' },
     title: {
-      en: 'Surdas ke Pad & Ram-Lakshman-Parashuram Samvad',
-      hi: 'सूरदास के पद एवं राम-लक्ष्मण-परशुराम संवाद',
+      en: 'Surdas ke Pad (Bhramargeet)',
+      hi: 'सूरदास के पद (भ्रमरगीत)',
     },
-    bossName: { en: 'Sur-Tulasi Kavya Guardian', hi: 'सूर-तुलसी काव्य प्रहरी' },
+    bossName: { en: 'Surdas Kavya Guardian', hi: 'सूरदास काव्य प्रहरी' },
     summaryPoints: [
       {
         en: 'Gopis address Uddhav as "Badbhagi" ironically because he remains untouched by Krishna’s divine love.',
         hi: 'गोपियाँ उद्धव को व्यंग्य में "बड़भागी" कहती हैं क्योंकि वे प्रेम-बंधन से अछूते हैं।',
       },
       {
-        en: 'Tulsidas uses Awadhi language and Chaupai-Doha metre to depict Lakshman’s fearless wit before Parashuram.',
-        hi: 'तुलसीदास ने अवधी भाषा तथा चौपाई-दोहा छंद में लक्ष्मण-परशुराम संवाद रचा है।',
+        en: 'Written in sweet Braj Bhasha, depicting Gopis as ants stuck to jaggery ("गुर चाँटी ज्यों पागी") & Krishna as Haril’s stick.',
+        hi: 'ब्रजभाषा में रचित इन पदों में गोपियों का प्रेम "गुर चाँटी ज्यों पागी" और कृष्ण "हारिल की लकरी" हैं।',
       },
     ],
     studyNotes: [
@@ -34,181 +34,256 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
           hi: 'सूरदास ने उद्धव के निर्गुण ज्ञान पर गोपियों के सगुण कृष्ण-प्रेम की विजय दिखाई है।',
         },
         keyPoints: [
-          { en: 'Language: Braj Bhasha · Style: Geeya Pad', hi: 'भाषा: ब्रजभाषा · प्रमुख रस: वियोग शृंगार' },
-          { en: 'Metaphors: Lotus leaf in water (प्रीति नदी में पाँव न बोरयो) and Gur-Chanti (ants stuck to jaggery).', hi: 'दृष्टांत: जल में कमल का पत्ता व गुड़ से चिपकी चींटियाँ।' },
+          { en: 'Language: Braj Bhasha · Ras: Viyog Shringar', hi: 'भाषा: ब्रजभाषा · प्रमुख रस: वियोग शृंगार' },
+          { en: 'Metaphors: Lotus leaf in water (प्रीति नदी में पाँव न बोरयो), Gur-Chanti, and Haril bird holding its stick.', hi: 'दृष्टांत: जल में कमल का पत्ता, गुड़ से चिपकी चींटियाँ व हारिल पक्षी की लकड़ी।' },
         ],
         examTip: { en: 'MP Board PYQ: Who is called "Badbhagi"? → Uddhav.', hi: 'बोर्ड मुख्य प्रश्न: "बड़भागी" किसे कहा गया? → उद्धव को।' },
       },
+    ],
+    questionIds: ['10-hi-1', '10-hi-m-1', '10-hi-m-2', '10-hi-m-15'],
+    secondsPerQuestion: 10,
+    baseXP: 115,
+    mapCoords: { x: 14, y: 68 },
+  },
+  {
+    id: '10-hi-tulsidas',
+    grade: '10',
+    subjectId: 'hindi',
+    subsectionId: 'kavya-khand',
+    order: 2,
+    chapterCode: { en: 'Kshitij-2 Kavya · Ch. 2', hi: 'क्षितिज-2 काव्य · पाठ 2' },
+    title: {
+      en: 'Ram-Lakshman-Parashuram Samvad (Tulsidas)',
+      hi: 'राम-लक्ष्मण-परशुराम संवाद (तुलसीदास)',
+    },
+    bossName: { en: 'Awadhi Dhanush Warden', hi: 'अवधी धनुष भंग रक्षक' },
+    summaryPoints: [
+      {
+        en: 'Excerpt from Balakand of Ramcharitmanas after Ram breaks Shiva’s bow at Sita’s Swayamvara.',
+        hi: 'रामचरितमानस के बालकांड से उद्धृत; शिव-धनुष भंग के बाद परशुराम का क्रोध व लक्ष्मण का व्यंग्य।',
+      },
+    ],
+    studyNotes: [
       {
         topicTitle: { en: '2. Ram-Lakshman-Parashuram Samvad', hi: '2. राम-लक्ष्मण-परशुराम संवाद (तुलसीदास)' },
         summary: {
-          en: 'Taken from Balakand of Ramcharitmanas after Ram breaks Shiva’s bow at Sita’s Swayamvara.',
-          hi: 'रामचरितमानस के बालकांड से उद्धृत; शिव-धनुष भंग के बाद परशुराम का क्रोध व लक्ष्मण का व्यंग्य।',
+          en: 'Shri Ram calms the furious sage humbly calling himself "your servant", while Lakshman responds with fearless satire.',
+          hi: 'श्रीराम विनम्रता से धनुष टूटने की ज़िम्मेदारी "दास" बनकर स्वीकारते हैं, जबकि लक्ष्मण वीर व्यंग्य करते हैं।',
         },
         keyPoints: [
-          { en: 'Shri Ram calms the sage humbly calling himself "your servant", while Lakshman uses Vyangya.', hi: 'श्रीराम विनम्रता से धनुष टूटने की ज़िम्मेदारी "दास" बनकर स्वीकारते हैं।' },
-          { en: 'Ras: Veer & Raudra Ras · Chhand: Chaupai & Doha.', hi: 'प्रमुख रस: रौद्र व वीर रस · भाषा: अवधी।' },
+          { en: 'Language: Awadhi · Metre: Chaupai & Doha.', hi: 'भाषा: अवधी · छंद: चौपाई व दोहा।' },
+          { en: 'Ras: Veer & Raudra Ras.', hi: 'प्रमुख रस: रौद्र व वीर रस।' },
         ],
+        examTip: { en: 'MP Board PYQ: Source Kand = Balakand of Ramcharitmanas.', hi: 'बोर्ड प्रश्न: यह संवाद रामचरितमानस के "बालकांड" से लिया गया है।' },
       },
     ],
-    questionIds: ['10-hi-1', '10-hi-2'],
-    secondsPerQuestion: 45,
-    baseXP: 115,
-    mapCoords: { x: 14, y: 68 },
+    questionIds: ['10-hi-2', '10-hi-m-3', '10-hi-m-4', '10-hi-m-16'],
+    secondsPerQuestion: 10,
+    baseXP: 120,
+    mapCoords: { x: 24, y: 52 },
   },
   {
     id: '10-hi-k2',
     grade: '10',
     subjectId: 'hindi',
     subsectionId: 'kavya-khand',
-    order: 2,
+    order: 3,
     chapterCode: { en: 'Kshitij-2 Kavya · Ch. 3–6', hi: 'क्षितिज-2 काव्य · पाठ 3–6' },
     title: {
-      en: 'Aatmakathya, Utsah, Yah Danturit Muskan & Sangatkar',
-      hi: 'आत्मकथ्य, उत्साह, यह दंतुरित मुसकान व संगतकार',
+      en: 'Aatmakathya, Utsah, Yah Danturit Muskan, Fasal & Sangatkar',
+      hi: 'आत्मकथ्य, उत्साह, यह दंतुरित मुसकान, फसल व संगतकार',
     },
     bossName: { en: 'Chhayavad Lyric Warden', hi: 'छायावाद काव्य रक्षक' },
     summaryPoints: [
       {
-        en: 'Jaishankar Prasad declined writing an autobiography for Premchand’s "Hans" magazine.',
-        hi: 'जयशंकर प्रसाद ने प्रेमचंद की "हंस" पत्रिका के लिए आत्मकथा न लिखने के कारण "आत्मकथ्य" रचा।',
+        en: 'Jaishankar Prasad declined writing an autobiography for Premchand’s "Hans" (1932); Nirala invokes clouds in "Utsah".',
+        hi: 'जयशंकर प्रसाद ने प्रेमचंद की "हंस" पत्रिका (1932) हेतु "आत्मकथ्य" रचा; निराला ने "उत्साह" में बादल का आह्वान किया।',
       },
       {
-        en: 'Nirala invokes thunderous clouds in "Utsah" for social awakening; Nagarjun celebrates a baby’s first teeth.',
-        hi: 'निराला ने "उत्साह" में बादल को नवसृजन व क्रांति का प्रतीक माना; "संगतकार" सहयोगियों के महत्व को दर्शाता है।',
+        en: 'Nagarjun celebrates a baby’s smile & farmers in "Fasal"; Manglesh Dabral honors backing vocalists in "Sangatkar".',
+        hi: 'नागार्जुन ने शिशु की मुसकान व "फसल" की महिमा गाई; "संगतकार" मुख्य गायक के सहायक के महत्व को दर्शाता है।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: '3. Aatmakathya (Jaishankar Prasad)', hi: '3. आत्मकथ्य (जयशंकर प्रसाद)' },
+        topicTitle: { en: '3–6. Aatmakathya, Utsah, Danturit Muskan & Sangatkar', hi: '3–6. आत्मकथ्य, उत्साह, दंतुरित मुसकान, फसल व संगतकार' },
         summary: {
-          en: 'Poet views his life as an ordinary empty pitcher (रीति गागर) unworthy of boastful memoir.',
-          hi: 'प्रसाद जी अपने जीवन को सरल व अभावग्रस्त मानकर आत्मकथा लिखने से विनम्रतापूर्वक इनकार करते हैं।',
+          en: 'Prasad calls his life an empty pitcher (रीति गागर); child’s smile melts even stone (पाषाण); Sangatkar lowers his pitch out of humanity.',
+          hi: 'शिशु की मुसकान से कठोर पाषाण पिघल जाता है; तार सप्तक पर संगतकार मुख्य गायक की टेक सँभालता है।',
         },
         keyPoints: [
           { en: 'Published in 1932 in "Hans" edited by Munshi Premchand.', hi: 'सन् 1932 में "हंस" पत्रिका के आत्मकथा विशेषांक में प्रकाशित।' },
-        ],
-      },
-      {
-        topicTitle: { en: '4–6. Utsah, Danturit Muskan & Sangatkar', hi: '4–6. उत्साह, दंतुरित मुसकान, फसल व संगतकार' },
-        summary: {
-          en: 'Nirala portrays clouds as destroyers of agony; Nagarjun praises farmers in "Fasal"; Manglesh Dabral honors backing vocalists.',
-          hi: '"उत्साह" आह्वान गीत है, "फसल" पानी-मिट्टी-श्रम का रूपांतरण है, और "संगतकार" मुख्य गायक के सहायक की निष्ठा बताता है।',
-        },
-        keyPoints: [
-          { en: 'Sangatkar’s lowered voice during Tar-Saptak preserves the main singer’s dignity—it is humanity, not failure.', hi: 'संगतकार का स्वर जानबूझकर धीमा रखना उसकी विफलता नहीं बल्कि मानवीय संवेदनशीलता है।' },
+          { en: 'Sangatkar’s lowered voice preserves the main singer’s dignity—it is humanity, not failure.', hi: 'संगतकार का स्वर जानबूझकर धीमा रखना उसकी मानवीय संवेदनशीलता है।' },
         ],
       },
     ],
-    questionIds: ['10-hi-11', '10-hi-utsah-1'],
-    secondsPerQuestion: 42,
+    questionIds: ['10-hi-11', '10-hi-utsah-1', '10-hi-m-5', '10-hi-m-6', '10-hi-m-7'],
+    secondsPerQuestion: 10,
     baseXP: 130,
-    mapCoords: { x: 32, y: 42 },
+    mapCoords: { x: 34, y: 40 },
   },
   {
     id: '10-hi-g1',
     grade: '10',
     subjectId: 'hindi',
     subsectionId: 'gadya-khand',
-    order: 3,
-    chapterCode: { en: 'Kshitij-2 Gadya · Ch. 7–9', hi: 'क्षितिज-2 गद्य · पाठ 7–9' },
+    order: 4,
+    chapterCode: { en: 'Kshitij-2 Gadya · Ch. 7', hi: 'क्षितिज-2 गद्य · पाठ 7' },
     title: {
-      en: 'Netaji ka Chashma, Balgovin Bhagat & Lakhnavi Andaz',
-      hi: 'नेताजी का चश्मा, बालगोबिन भगत व लखनवी अंदाज़',
+      en: 'Netaji ka Chashma (Swayam Prakash)',
+      hi: 'नेताजी का चश्मा (स्वयं प्रकाश)',
     },
-    bossName: { en: 'Gadya Patra Warden', hi: 'गद्य चरित्र रक्षक' },
+    bossName: { en: 'Deshbhakti Square Keeper', hi: 'देशभक्ति चौराहा प्रहरी' },
     summaryPoints: [
       {
         en: 'Captain Chashmewala was a patriotic lame hawker who fitted frames on Subhas Chandra Bose’s stone statue.',
         hi: 'कैप्टन चश्मेवाला देशभक्ति से प्रेरित होकर नेताजी की मूर्ति पर असली चश्मा लगाता था।',
       },
       {
-        en: 'Balgovin Bhagat followed Kabir as "Sahab" and got his widowed daughter-in-law remarried.',
-        hi: 'बालगोबिन भगत कबीर को "साहब" मानते थे और उन्होंने विधवा पुत्रवधू का पुनर्विवाह कराया।',
+        en: 'After Captain’s death, town children placed a Sarkanda (reed) frame on the statue, delighting Haldar Sahab.',
+        hi: 'कैप्टन की मृत्यु के बाद बच्चों ने मूर्ति पर सरकंडे का चश्मा लगाया, जिसे देख हालदार साहब भावुक हुए।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: '7–8. Netaji ka Chashma & Balgovin Bhagat', hi: '7–8. नेताजी का चश्मा व बालगोबिन भगत' },
+        topicTitle: { en: '7. Netaji ka Chashma — Character & Message', hi: '7. नेताजी का चश्मा — पात्र व संदेश' },
         summary: {
-          en: 'Swayam Prakash shows everyday patriotism; Benipuri depicts a householder ascetic transcending orthodoxy.',
-          hi: 'स्वयं प्रकाश आम नागरिकों की देशभक्ति व बेनीपुरी जी गृहस्थ साधु भगत की समाज-सुधारक भावना दिखाते हैं।',
+          en: 'Everyday citizens like Captain and children keep patriotism alive even without grand monuments.',
+          hi: 'स्वयं प्रकाश बताते हैं कि देशभक्ति किसी बड़े पद की नहीं बल्कि आम नागरिकों और बच्चों की भावना से जीवित रहती है।',
         },
         keyPoints: [
-          { en: 'At the end of Netaji ka Chashma, children put a Sarkanda (reed) spectacle on the statue.', hi: 'कहानी के अंत में बच्चों द्वारा बनाया सरकंडे का चश्मा नई पीढ़ी की देशभक्ति का प्रतीक है।' },
-        ],
-      },
-      {
-        topicTitle: { en: '9. Lakhnavi Andaz (Yashpal)', hi: '9. लखनवी अंदाज़ (यशपाल)' },
-        summary: {
-          en: 'Satire on decaying feudal nobility pretending to be satisfied merely by smelling spiced cucumber slices.',
-          hi: 'पतनशील सामंती वर्ग के बनावटी आडंबर और खोखली रईसी पर व्यंग्य।',
-        },
-        keyPoints: [
-          { en: 'Prompts the idea of "Nayi Kahani" without traditional plot.', hi: 'यशपाल व्यंग्य करते हैं कि क्या बिना विचार-पात्र के "नई कहानी" लिखी जा सकती है!' },
+          { en: 'Even Panwala wiped his eyes quietly when reporting Captain’s death.', hi: 'कैप्टन की मृत्यु पर पानवाला भी भावुक होकर आँखें पोंछता है।' },
         ],
       },
     ],
-    questionIds: ['10-hi-3', '10-hi-5', '10-hi-13'],
-    secondsPerQuestion: 40,
-    baseXP: 140,
-    mapCoords: { x: 48, y: 66 },
+    questionIds: ['10-hi-3', '10-hi-m-8', '10-hi-m-13', '10-hi-m-17'],
+    secondsPerQuestion: 10,
+    baseXP: 135,
+    mapCoords: { x: 46, y: 66 },
+  },
+  {
+    id: '10-hi-balgovin',
+    grade: '10',
+    subjectId: 'hindi',
+    subsectionId: 'gadya-khand',
+    order: 5,
+    chapterCode: { en: 'Kshitij-2 Gadya · Ch. 8–9', hi: 'क्षितिज-2 गद्य · पाठ 8–9' },
+    title: {
+      en: 'Balgovin Bhagat & Lakhnavi Andaz',
+      hi: 'बालगोबिन भगत व लखनवी अंदाज़',
+    },
+    bossName: { en: 'Bhagat & Nawab Warden', hi: 'भगत-नवाब गद्य रक्षक' },
+    summaryPoints: [
+      {
+        en: 'Balgovin Bhagat revered Kabir as "Sahab", celebrated his son’s death as union with God, and arranged his daughter-in-law’s remarriage.',
+        hi: 'बालगोबिन भगत कबीर को "साहब" मानते थे; पुत्र की मृत्यु पर उत्सव मनाने व पतोहू के पुनर्विवाह का संदेश दिया।',
+      },
+      {
+        en: 'Nawab Sahab in "Lakhnavi Andaz" discarded spiced cucumber slices after merely smelling them to show hollow pride.',
+        hi: '"लखनवी अंदाज़" में नवाब साहब ने झूठी शान दिखाने हेतु खीरा बिना खाए खिड़की से फेंक दिया।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: '8–9. Balgovin Bhagat & Lakhnavi Andaz', hi: '8–9. बालगोबिन भगत व लखनवी अंदाज़' },
+        summary: {
+          en: 'Ramvriksh Benipuri’s रेखाचित्र contrasts true spiritual householder simplicity vs Yashpal’s satire on feudal vanity.',
+          hi: 'बेनीपुरी जी का रेखाचित्र रूढ़ियों पर प्रहार करता है; यशपाल का व्यंग्य "नई कहानी" की ओर संकेत करता है।',
+        },
+        keyPoints: [
+          { en: 'Bhagat sang Kabir’s padas in Karthik-Phagun dawn.', hi: 'भगत जी पतोहू के भाई को बुलाकर उसका पुनर्विवाह करने का आदेश देते हैं।' },
+        ],
+      },
+    ],
+    questionIds: ['10-hi-5', '10-hi-13', '10-hi-m-9', '10-hi-m-12'],
+    secondsPerQuestion: 10,
+    baseXP: 145,
+    mapCoords: { x: 56, y: 42 },
   },
   {
     id: '10-hi-g2',
     grade: '10',
     subjectId: 'hindi',
     subsectionId: 'gadya-khand',
-    order: 4,
-    chapterCode: { en: 'Kshitij Gadya Ch. 10–12 & Kritika-2', hi: 'क्षितिज गद्य 10–12 व कृतिका-2' },
+    order: 6,
+    chapterCode: { en: 'Kshitij-2 Gadya · Ch. 10–12', hi: 'क्षितिज-2 गद्य · पाठ 10–12' },
     title: {
-      en: 'Ek Kahani Yah Bhi, Naubatkhane, Sanskriti & Kritika-2 (Ch. 1–3)',
-      hi: 'एक कहानी यह भी, नौबतखाने, संस्कृति एवं कृतिका-2 (पाठ 1–3)',
+      en: 'Ek Kahani Yah Bhi, Naubatkhane Mein Ibadat & Sanskriti',
+      hi: 'एक कहानी यह भी, नौबतखाने में इबादत व संस्कृति',
     },
-    bossName: { en: 'Kritika Memoir Sentinel', hi: 'कृतिका स्मृति प्रहरी' },
+    bossName: { en: 'Kashi Shehnai Sentinel', hi: 'काशी शहनाई व संस्कृति प्रहरी' },
     summaryPoints: [
       {
-        en: 'Manu Bhandari’s teacher Sheela Agrawal ignited her political voice; Bismillah Khan revered Kashi’s Shehnai.',
-        hi: 'मन्नू भंडारी पर प्राध्यापिका शीला अग्रवाल का गहरा प्रभाव था; बिस्मिल्ला खाँ काशी के अमर शहनाई वादक थे।',
+        en: 'Manu Bhandari’s professor Sheela Agrawal shaped her activism; Bismillah Khan revered Kashi’s Shehnai & Ganga.',
+        hi: 'मन्नू भंडारी पर शीला अग्रवाल का गहरा प्रभाव रहा; उस्ताद बिस्मिल्ला खाँ काशी व शहनाई के अमर साधक थे।',
       },
       {
-        en: 'Kritika-2 covers Mata ka Anchal (Tarkeshwarnath), Sana Sana Hath Jodi (Gangtok), and Main Kyon Likhta Hoon.',
-        hi: 'कृतिका-2 में माता का अँचल (भोलानाथ/तारकेश्वरनाथ), साना-साना हाथ जोड़ि (गंतोक) व मैं क्यों लिखता हूँ शामिल हैं।',
+        en: 'Bhadant Anand Kausalyayan defines "Sanskriti" as creative welfare intelligence and "Sabhyata" as its outward product.',
+        hi: 'आग और सुई का आविष्कार करने वाली कल्याणकारी बुद्धि "संस्कृति" है तथा उसका परिणाम "सभ्यता" है।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: '10–12. Ek Kahani Yah Bhi, Naubatkhane & Sanskriti', hi: '10–12. एक कहानी यह भी, नौबतखाने व संस्कृति' },
+        topicTitle: { en: '10–12. Ajmer Awakening, Kashi Shehnai & Sanskriti', hi: '10–12. एक कहानी यह भी, नौबतखाने व संस्कृति' },
         summary: {
-          en: 'Covers women’s awakening in Ajmer, Ustad Bismillah Khan’s syncretic devotion, and Civilization vs Culture.',
-          hi: 'अजमेर के स्वतंत्रता आंदोलन, उस्ताद बिस्मिल्ला खाँ की संगीत साधना व सभ्यता-संस्कृति का अंतर।',
+          en: 'Covers women’s participation in 1946–47 independence movement, Ustad Bismillah Khan’s syncretic music, and Civilization vs Culture.',
+          hi: 'अजमेर का स्वतंत्रता संग्राम, काशी की गंगा-जमुनी तहज़ीब व सभ्यता-संस्कृति की परिभाषा।',
         },
         keyPoints: [
-          { en: 'Sabhyata is the outer result of inner Sanskriti (invention of needle/fire = Sanskriti).', hi: 'आग और सुई का आविष्कार करने वाली कल्याणकारी बुद्धि "संस्कृति" है।' },
-        ],
-      },
-      {
-        topicTitle: { en: 'Kritika-2 Complete (Ch. 1, 2 & 3)', hi: 'कृतिका-2 संपूर्ण (पाठ 1, 2 व 3)' },
-        summary: {
-          en: 'Bholanath runs into his mother’s lap when frightened by a snake; Gangtok is called "city of hardworking kings".',
-          hi: 'साँप से डरकर भोलानाथ माँ के अँचल में छिपता है; "गंतोक" को मेहनतकश बादशाहों का शहर कहा गया है।',
-        },
-        keyPoints: [
-          { en: 'Agyeya wrote "Main Kyon Likhta Hoon" reflecting on his Hiroshima experience.', hi: 'अज्ञेय जी ने हिरोशिमा के परमाणु अनुभव से "मैं क्यों लिखता हूँ" की आभ्यंतर विवशता बताई।' },
+          { en: 'Sabhyata is the outer result of inner Sanskriti (Newton, fire, needle).', hi: 'जब कल्याणकारी बुद्धि कल्याण की भावना खो दे तो "असंस्कृति" बन जाती है।' },
         ],
       },
     ],
-    questionIds: ['10-hi-ekkahani-1', '10-hi-8', '10-hi-14', '10-hi-15'],
-    secondsPerQuestion: 40,
+    questionIds: ['10-hi-ekkahani-1', '10-hi-m-10', '10-hi-m-14', '10-hi-m-18'],
+    secondsPerQuestion: 10,
     baseXP: 150,
-    mapCoords: { x: 64, y: 34 },
+    mapCoords: { x: 64, y: 66 },
+  },
+  {
+    id: '10-hi-kritika',
+    grade: '10',
+    subjectId: 'hindi',
+    subsectionId: 'gadya-khand',
+    order: 7,
+    chapterCode: { en: 'Kritika-2 · Ch. 1, 2 & 3', hi: 'कृतिका-2 · पाठ 1, 2 व 3' },
+    title: {
+      en: 'Mata ka Anchal, Sana Sana Hath Jodi & Main Kyon Likhta Hoon',
+      hi: 'माता का अँचल, साना-साना हाथ जोड़ि व मैं क्यों लिखता हूँ',
+    },
+    bossName: { en: 'Kritika Memoir Sentinel', hi: 'कृतिका स्मृति प्रहरी' },
+    summaryPoints: [
+      {
+        en: 'Kritika-2: Bholanath (Tarkeshwarnath) hides in his mother’s lap when scared by a snake; Gangtok is city of hardworking kings.',
+        hi: 'भोलानाथ (तारकेश्वरनाथ) साँप से डरकर माँ के अँचल में छिपता है; "गंतोक" को मेहनतकश बादशाहों का शहर कहा गया है।',
+      },
+      {
+        en: 'Agyeya reflects on his Hiroshima nuclear shadow visit in "Main Kyon Likhta Hoon".',
+        hi: 'अज्ञेय जी ने हिरोशिमा के परमाणु अनुभव से "मैं क्यों लिखता हूँ" की आभ्यंतर विवशता बताई।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'Kritika-2 Complete (Ch. 1, 2 & 3)', hi: 'कृतिका-2 संपूर्ण (पाठ 1, 2 व 3)' },
+        summary: {
+          en: 'Shivpujan Sahay celebrates rural childhood & maternal refuge; Madhu Kankariya describes Sikkim’s Yoomthang & Katao; Agyeya defines inner creative urge.',
+          hi: 'मातृ-प्रेम की छत्रछाया, सिक्किम यात्रा वृत्तांत व लेखक की आंतरिक अनुभूति के तीनों पाठ।',
+        },
+        keyPoints: [
+          { en: 'Bholanath’s real name in Mata ka Anchal: Tarkeshwarnath.', hi: 'भोलानाथ का वास्तविक नाम: तारकेश्वरनाथ।' },
+        ],
+      },
+    ],
+    questionIds: ['10-hi-8', '10-hi-14', '10-hi-15', '10-hi-m-11'],
+    secondsPerQuestion: 10,
+    baseXP: 155,
+    mapCoords: { x: 74, y: 36 },
   },
   {
     id: '10-hi-ras-alankar',
     grade: '10',
     subjectId: 'hindi',
     subsectionId: 'kavyabodh-vyakaran',
-    order: 5,
+    order: 8,
     chapterCode: { en: 'Kavya Bodh · Ras, Chhand & Alankar', hi: 'काव्य बोध · रस, छंद व अलंकार' },
     title: {
       en: 'Dedicated Subsections: Ras, Alankar & Chhand Poetics',
@@ -221,8 +296,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         hi: 'प्रमुख रस व स्थायी भाव: शृंगार (रति), वीर (उत्साह), करुण (शोक), हास्य (हास), रौद्र (क्रोध), शांत (निर्वेद)।',
       },
       {
-        en: 'Alankar: Anupras (sound repetition), Yamak (word repeated with new meaning), Shlesh (puns), Atishayokti.',
-        hi: 'अलंकार: अनुप्रास (वर्ण आवृत्ति), यमक (भिन्न अर्थों में शब्द आवृत्ति), श्लेष (एक शब्द के अनेक अर्थ), अतिशयोक्ति।',
+        en: 'Alankar: Anupras, Yamak, Shlesh, Atishayokti; Chhand: Doha (13-11), Chaupai (16 matras).',
+        hi: 'अलंकार: अनुप्रास, यमक, श्लेष, अतिशयोक्ति; छंद: दोहा (13-11 मात्राएँ) व चौपाई (16 मात्राएँ)।',
       },
     ],
     studyNotes: [
@@ -243,21 +318,21 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
           hi: 'दोहा अर्धसम मात्रिक (13-11 मात्राएँ) तथा चौपाई सम मात्रिक छंद (प्रत्येक चरण 16 मात्राएँ) है।',
         },
         keyPoints: [
-          { en: 'Yamak: "कनक-कनक ते सौ गुनी" (gold vs dhatura); Utpreksha markers: मनु, मानो, जनु, जानो.', hi: 'उत्प्रेक्षा के वाचक शब्द: मनु, मानो, जनु, जानो, मनहुँ; अतिशयोक्ति में लोक-सीमा से बढ़ाकर वर्णन।' },
+          { en: 'Yamak: "कनक-कनक ते सौ गुनी"; Utpreksha markers: मनु, मानो, जनु, जानो.', hi: 'उत्प्रेक्षा के वाचक शब्द: मनु, मानो, जनु, जानो, मनहुँ; अतिशयोक्ति में लोक-सीमा से बढ़ाकर वर्णन।' },
         ],
       },
     ],
     questionIds: ['10-hi-7', '10-hi-9', '10-hi-10', '10-hi-tricky-2'],
-    secondsPerQuestion: 35,
+    secondsPerQuestion: 10,
     baseXP: 165,
-    mapCoords: { x: 78, y: 58 },
+    mapCoords: { x: 82, y: 58 },
   },
   {
     id: '10-hi-vyakaran',
     grade: '10',
     subjectId: 'hindi',
     subsectionId: 'kavyabodh-vyakaran',
-    order: 6,
+    order: 9,
     chapterCode: { en: 'Vyakaran · Complete Grammar', hi: 'हिन्दी व्याकरण · संपूर्ण खंड' },
     title: {
       en: 'Samas, Sandhi, Vachya, Kriya, Vakya Bhed & Muhavare',
@@ -266,7 +341,7 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
     bossName: { en: 'Vyakaran Knight', hi: 'व्याकरण महायोद्धा' },
     summaryPoints: [
       {
-        en: '6 Samas types (Dvigu = numeral first word; Dvandva = hyphenated both equal; Bahuvrihi = third meaning).',
+        en: '6 Samas types (Dvigu = numeral; Dvandva = hyphenated equal; Bahuvrihi = third meaning).',
         hi: 'समास के 6 भेद: अव्ययीभाव, तत्पुरुष, कर्मधारय, द्विगु (संख्यावाची), द्वंद्व (योजक), बहुव्रीहि (तीसरा अर्थ)।',
       },
       {
@@ -278,144 +353,241 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
       {
         topicTitle: { en: 'Samas & Sandhi Identification Rules', hi: 'समास व संधि पहचान के अचूक नियम' },
         summary: {
-          en: 'Swar Sandhi (Dirgha, Gun, Vriddhi, Yan, Ayadi) + Vyanjan + Visarga Sandhi. Watch for Dashanan Bahuvrihi vs Dvigu.',
+          en: 'Swar, Vyanjan & Visarga Sandhi. Watch for Dashanan Bahuvrihi vs Dvigu.',
           hi: 'विद्या+आलय (दीर्घ संधि), त्रिभुवन (द्विगु समास), पर दशानन (दस हैं आनन जिसके अर्थात् रावण = बहुव्रीहि)।',
         },
         keyPoints: [
-          { en: 'Kartrivachya uses transitive/intransitive active verbs; Bhavavachya is always singular, masculine, 3rd person.', hi: 'भाववाच्य में क्रिया सदैव एकवचन, पुल्लिंग व अकर्मक होती है (जैसे—मुझसे चला नहीं जाता)।' },
+          { en: 'Bhavavachya is always singular, masculine, 3rd person.', hi: 'भाववाच्य में क्रिया सदैव एकवचन, पुल्लिंग व अकर्मक होती है।' },
         ],
       },
     ],
     questionIds: ['10-hi-4', '10-hi-6', '10-hi-12', '10-hi-tricky-1'],
-    secondsPerQuestion: 34,
+    secondsPerQuestion: 10,
     baseXP: 175,
-    mapCoords: { x: 88, y: 36 },
+    mapCoords: { x: 90, y: 36 },
   },
 
-  // ==================== CLASS 10 · ENGLISH ====================
+  // ==================== CLASS 10 · ENGLISH (8 STAGES) ====================
   {
     id: '10-en-ff1',
     grade: '10',
     subjectId: 'english',
     subsectionId: 'first-flight',
     order: 1,
-    chapterCode: { en: 'First Flight · Ch. 1–3', hi: 'First Flight · पाठ 1–3' },
+    chapterCode: { en: 'First Flight · Ch. 1 & Poems 1–2', hi: 'First Flight · पाठ 1 व कविता 1–2' },
     title: {
-      en: 'A Letter to God, Mandela, Two Stories About Flying & Poems',
-      hi: 'A Letter to God, Nelson Mandela व Two Stories About Flying',
+      en: 'A Letter to God, Dust of Snow & Fire and Ice',
+      hi: 'A Letter to God, Dust of Snow एवं Fire and Ice',
     },
-    bossName: { en: 'Liberty Storm Keeper', hi: 'लिबर्टी द्वीप प्रहरी' },
+    bossName: { en: 'Frost & Faith Warden', hi: 'लेंचो व फ्रॉस्ट प्रहरी' },
     summaryPoints: [
       {
-        en: 'Lencho asked God for 100 pesos after hailstones ruined his crop; Robert Frost wrote Dust of Snow & Fire and Ice.',
-        hi: 'लेंचो ने ईश्वर से 100 पेसो माँगे; रॉबर्ट फ्रॉस्ट ने "Dust of Snow" व "Fire and Ice" लिखी।',
+        en: 'Lencho asked God for 100 pesos after hailstones ruined his crop; post office employees collected 70 pesos.',
+        hi: 'लेंचो ने ईश्वर से 100 पेसो माँगे; पोस्ट ऑफिस कर्मचारियों ने 70 पेसो इकट्ठा करके भेजे।',
       },
       {
-        en: 'Nelson Mandela became South Africa’s first Black President on 10 May 1994; Young Seagull conquered his fear by hunger.',
-        hi: 'मंडेला 10 मई 1994 को राष्ट्रपति बने; भूख ने नन्हे सीगल को उड़ना सिखाया।',
+        en: 'Robert Frost symbolizes Desire as "Fire" and Hatred as "Ice" in Fire and Ice.',
+        hi: 'रॉबर्ट फ्रॉस्ट की कविता "Fire and Ice" में Fire = इच्छा (Desire) व Ice = घृणा (Hatred) के प्रतीक हैं।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: 'First Flight Ch. 1–3 Complete Notes', hi: 'First Flight पाठ 1–3 मुख्य बिंदु' },
+        topicTitle: { en: 'Ch. 1 A Letter to God & Frost Poems', hi: 'पाठ 1 व रॉबर्ट फ्रॉस्ट की कविताएँ' },
         summary: {
-          en: 'Covers G.L. Fuentes (Letter to God), Nelson Mandela (Long Walk to Freedom), Liam O’Flaherty (His First Flight), and Frederick Forsyth (Black Aeroplane).',
-          hi: 'लेंचो की अटूट आस्था, मंडेला के "ट्विन ऑब्लिगेशंस", तथा सीगल व ब्लैक एयरोप्लेन के रहस्य।',
+          en: 'G.L. Fuentes shows Lencho calling helpers "a bunch of crooks"; Crow & Hemlock tree represent uplifting hope in Dust of Snow.',
+          hi: 'लेंचो की अटूट आस्था तथा कौए व हेमलॉक वृक्ष से कवि का मूड बदलने का सुंदर वर्णन।',
         },
         keyPoints: [
-          { en: 'Mandela’s Two Obligations: 1) Family, 2) People & Community. Post office employees collected 70 pesos for Lencho.', hi: 'पोस्ट ऑफिस कर्मचारियों ने मिलकर 70 पेसो इकट्ठा किए जिन्हें लेंचो ने गलती से "bunch of crooks" समझा।' },
+          { en: 'Postmaster raised 70 pesos (more than half) so Lencho’s faith stayed alive.', hi: 'पोस्टमास्टर ने अपने वेतन का हिस्सा देकर 70 पेसो जुटाए थे।' },
         ],
       },
     ],
-    questionIds: ['10-en-1', '10-en-2', '10-en-3', '10-en-extra-1'],
-    secondsPerQuestion: 44,
-    baseXP: 125,
+    questionIds: ['10-en-1', '10-en-2', '10-en-m-1', '10-en-m-2'],
+    secondsPerQuestion: 10,
+    baseXP: 120,
     mapCoords: { x: 14, y: 66 },
+  },
+  {
+    id: '10-en-mandela',
+    grade: '10',
+    subjectId: 'english',
+    subsectionId: 'first-flight',
+    order: 2,
+    chapterCode: { en: 'First Flight · Ch. 2–3', hi: 'First Flight · पाठ 2–3' },
+    title: {
+      en: 'Nelson Mandela & Two Stories About Flying',
+      hi: 'Nelson Mandela एवं Two Stories About Flying',
+    },
+    bossName: { en: 'Liberty Storm Keeper', hi: 'लिबर्टी व उड़ान प्रहरी' },
+    summaryPoints: [
+      {
+        en: 'Nelson Mandela took oath on 10 May 1994; Young Seagull conquered fear when hunger drove him to dive for fish.',
+        hi: 'मंडेला ने 10 मई 1994 को शपथ ली; भूख ने नन्हे सीगल को पहली उड़ान भरना सिखाया।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'Long Walk to Freedom & Flying Chapters', hi: 'मंडेला व उड़ान के दोनों पाठ' },
+        summary: {
+          en: 'Mandela’s Twin Obligations: 1) Family, 2) Country/People. Forsyth’s Black Aeroplane guides Old Dakota through storm clouds.',
+          hi: 'मंडेला के दो दायित्व व ब्लैक एयरोप्लेन द्वारा डकोटा विमान की सुरक्षित लैंडिंग।',
+        },
+        keyPoints: [
+          { en: 'Young Seagull was driven by maddening hunger at fish in his mother’s beak.', hi: '24 घंटे की भूख ने सीगल के पंख स्वतः खोल दिए।' },
+        ],
+      },
+    ],
+    questionIds: ['10-en-3', '10-en-m-3', '10-en-m-9', '10-en-extra-1'],
+    secondsPerQuestion: 10,
+    baseXP: 130,
+    mapCoords: { x: 26, y: 44 },
   },
   {
     id: '10-en-ff2',
     grade: '10',
     subjectId: 'english',
     subsectionId: 'first-flight',
-    order: 2,
-    chapterCode: { en: 'First Flight · Ch. 4–9', hi: 'First Flight · पाठ 4–9' },
+    order: 3,
+    chapterCode: { en: 'First Flight · Ch. 4–6 & Poems', hi: 'First Flight · पाठ 4–6 व कविताएँ' },
     title: {
-      en: 'Anne Frank, Glimpses of India, Mijbil, Valli, Benares & Proposal',
-      hi: 'Anne Frank, Coorg, Mijbil, Madam Rides the Bus, Benares व Proposal',
+      en: 'Anne Frank, Glimpses of India, Mijbil & Amanda!',
+      hi: 'Anne Frank, Coorg/Goa/Assam, Mijbil व Amanda!',
     },
-    bossName: { en: 'Chronicle Harbour Warden', hi: 'क्रॉनिकल बंदरगाह रक्षक' },
+    bossName: { en: 'Coorg Chronicle Warden', hi: 'कुर्ग व ऐन फ्रैंक रक्षक' },
     summaryPoints: [
       {
-        en: 'Anne Frank called her diary "Kitty"; Coorg is Karnataka’s smallest district famous for coffee & Kodavu valor.',
-        hi: 'ऐन फ्रैंक की डायरी का नाम "किटी" था; कुर्ग कॉफी के लिए प्रसिद्ध है।',
-      },
-      {
-        en: 'Kisa Gotami learns death’s universality at Benares; Lomov & Natalya quarrel over Oxen Meadows in Chekhov’s farce.',
-        hi: 'किसा गौतमी को मृत्यु की सच्चाई का बोध हुआ; चेखव के नाटक में ऑक्सन मीडोज़ पर झगड़ा होता है।',
+        en: 'Anne Frank named her diary "Kitty"; Coorg (smallest Karnataka district) gave General K.M. Cariappa.',
+        hi: 'ऐन फ्रैंक की डायरी का नाम "किटी" था; कुर्ग ने भारतीय सेना को जनरल करियप्पा दिए।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: 'First Flight Ch. 4–9 & Poems (Amanda, Trees, Fog, Custard, Anne Gregory)', hi: 'First Flight पाठ 4–9 व सभी कविताएँ' },
+        topicTitle: { en: 'Anne Frank, Glimpses of India & Poems', hi: 'ऐन फ्रैंक, भारत की झलकियाँ व कविताएँ' },
         summary: {
-          en: 'Baker from Goa (Pader), Coorg (General Cariappa), Tea from Assam; Valli saves 60 paise for a two-way bus ride.',
-          hi: 'गोवा का बेकर (पैडर), असम की चाय, मैक्सवेल का ऊदबिलाव मिजबिल, तथा वल्ली की 60 पैसे वाली बस यात्रा।',
+          en: 'Baker from Goa (Pader), Coorg coffee/Kodavu valour, Assam tea legends; Amanda craves silent freedom.',
+          hi: 'गोवा का पैडर बेकर, कुर्ग की कॉफी, असम की चाय और अमंडा कविता का सार।',
         },
         keyPoints: [
-          { en: 'Carl Sandburg compares "Fog" to a silent cat; Ogden Nash’s "Custard the Dragon" proves brave when a pirate attacks.', hi: 'कार्ल सैंडबर्ग ने कोहरे (Fog) की तुलना दबे पाँव आने वाली बिल्ली से की है।' },
+          { en: 'Carl Sandburg compares "Fog" to a silent cat; Custard proves brave against pirate.', hi: 'कार्ल सैंडबर्ग ने कोहरे (Fog) की तुलना बिल्ली से की है।' },
         ],
       },
     ],
-    questionIds: ['10-en-5', '10-en-8', '10-en-11', '10-en-extra-2'],
-    secondsPerQuestion: 42,
-    baseXP: 140,
-    mapCoords: { x: 34, y: 40 },
+    questionIds: ['10-en-5', '10-en-8', '10-en-11', '10-en-m-10'],
+    secondsPerQuestion: 10,
+    baseXP: 135,
+    mapCoords: { x: 38, y: 64 },
+  },
+  {
+    id: '10-en-bus',
+    grade: '10',
+    subjectId: 'english',
+    subsectionId: 'first-flight',
+    order: 4,
+    chapterCode: { en: 'First Flight · Ch. 7–9', hi: 'First Flight · पाठ 7–9' },
+    title: {
+      en: 'Madam Rides the Bus, Sermon at Benares & The Proposal',
+      hi: 'Madam Rides the Bus, Sermon at Benares एवं The Proposal',
+    },
+    bossName: { en: 'Benares Harbour Warden', hi: 'बनारस व प्रपोज़ल रक्षक' },
+    summaryPoints: [
+      {
+        en: 'Valli saved 60 paise (30 paise each way); Kisa Gotami learned death is universal; Lomov & Natalya quarrel over Oxen Meadows.',
+        hi: 'वल्ली ने 60 पैसे (30 पैसे एक तरफ) बचाए; किसा गौतमी को मृत्यु का सत्य ज्ञात हुआ; ऑक्सन मीडोज़ विवाद।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'First Flight Ch. 7–9 Core Facts', hi: 'पाठ 7–9 मुख्य परीक्षा बिंदु' },
+        summary: {
+          en: 'Buddha asked for mustard seeds from a house where no loved one had ever died; Chekhov’s farce satirizes landed marriage.',
+          hi: 'गौतम बुद्ध ने मृत्यु-रहित घर से सरसों के दाने लाने को कहा जिससे किसा गौतमी को ज्ञान मिला।',
+        },
+        keyPoints: [
+          { en: 'Valli’s round-trip bus fare: 30 + 30 = 60 paise.', hi: 'वल्ली का एक तरफ का किराया 30 पैसे था।' },
+        ],
+      },
+    ],
+    questionIds: ['10-en-m-4', '10-en-m-5', '10-en-extra-2', '10-en-m-12'],
+    secondsPerQuestion: 10,
+    baseXP: 145,
+    mapCoords: { x: 48, y: 38 },
   },
   {
     id: '10-en-fp1',
     grade: '10',
     subjectId: 'english',
     subsectionId: 'footprints',
-    order: 3,
-    chapterCode: { en: 'Footprints Without Feet · Ch. 1–9', hi: 'Footprints · संपूर्ण पाठ 1–9' },
+    order: 5,
+    chapterCode: { en: 'Footprints · Ch. 1–5', hi: 'Footprints · पाठ 1–5' },
     title: {
-      en: 'Tricki, Thief’s Story, Griffin, Ebright, Necklace, Bholi & Think-Tank',
-      hi: 'Tricki, Thief’s Story, Griffin, Ebright, Necklace, Bholi व Think-Tank',
+      en: 'Tricki, Thief’s Story, Midnight Visitor, Trust & Invisible Griffin',
+      hi: 'Tricki, Hari Singh, Ausable, Horace Danby व Griffin',
     },
-    bossName: { en: 'Shadow Footprints Lord', hi: 'अदृश्य पदचिह्न स्वामी' },
+    bossName: { en: 'Invisible Footprints Boss', hi: 'अदृश्य वैज्ञानिक प्रहरी' },
     summaryPoints: [
       {
-        en: 'All 9 chapters: Dr. Herriot’s Surgery, Anil & Hari Singh, Ausable’s Midnight Balcony trick, Horace Danby & Griffin.',
-        hi: 'सभी 9 पाठ: ट्रिकी का इलाज, हरि सिंह, ऑसेबल की सूझबूझ, ग्रिफिन का अदृश्य होना।',
-      },
-      {
-        en: 'Ebright’s monarch butterflies, Matilda’s 10-year debt over an imitation necklace, Sulekha (Bholi), & Mother Goose.',
-        hi: 'मटिल्डा का नकली हार, सुलेखा (भोली) का दहेज विरोध, व नर्सरी राइम्स किताब द्वारा मंगल आक्रमण से बचाव।',
+        en: 'Dr. Herriot cured overfed Tricki with water & exercise; Anil’s trust reformed Hari Singh; Griffin discovered invisibility.',
+        hi: 'डॉ. हेरियट ने ट्रिकी को पानी व व्यायाम से ठीक किया; अनिल के विश्वास ने हरि सिंह को बदला; ग्रिफिन का आविष्कार।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: 'Complete Footprints Reader Highlights (Ch. 1–9)', hi: 'फुटप्रिंट्स विदाउट फीट (सभी 9 पाठ) सार' },
+        topicTitle: { en: 'Footprints Ch. 1–5 Notes', hi: 'फुटप्रिंट्स पाठ 1–5 मुख्य बिंदु' },
         summary: {
-          en: 'Covers Richard Ebright’s "The Travels of Monarch X", Guy de Maupassant’s twist in "The Necklace" (paste diamond worth 500 francs), and Bholi.',
-          hi: 'मटिल्डा को अंत में पता चलता है कि फॉरेस्टियर का हार नकली (500 फ्रैंक) था; भोली का असली नाम सुलेखा था।',
+          en: 'Ausable outsmarts Max using a fake balcony story; Horace Danby is tricked by a lady in red; Griffin burns landlord’s house.',
+          hi: 'ऑसेबल की नकली बालकनी युक्ति व ग्रिफिन द्वारा अदृश्य होने की दवा का दुरुपयोग।',
         },
         keyPoints: [
-          { en: 'Think-Tank, ruler of Mars, misinterpreted nursery rhyme "Humpty Dumpty" as a warning of Earth invasion.', hi: '"The Book That Saved the Earth" में थिंक-टैंक नर्सरी कविता से डरकर मंगल ग्रह की सेना वापस बुला लेता है।' },
+          { en: 'Tricki’s only illness was over-pampering and zero exercise.', hi: 'ट्रिकी की बीमारी अधिक खाने व आलस्य से थी।' },
         ],
       },
     ],
-    questionIds: ['10-en-6', '10-en-13', '10-en-14', '10-en-extra-3'],
-    secondsPerQuestion: 40,
+    questionIds: ['10-en-6', '10-en-13', '10-en-14', '10-en-m-6'],
+    secondsPerQuestion: 10,
+    baseXP: 150,
+    mapCoords: { x: 60, y: 64 },
+  },
+  {
+    id: '10-en-fp2',
+    grade: '10',
+    subjectId: 'english',
+    subsectionId: 'footprints',
+    order: 6,
+    chapterCode: { en: 'Footprints · Ch. 6–9', hi: 'Footprints · पाठ 6–9' },
+    title: {
+      en: 'Making of a Scientist, The Necklace, Bholi & Book That Saved Earth',
+      hi: 'Ebright, The Necklace, Bholi (सुलेखा) व Think-Tank',
+    },
+    bossName: { en: 'Shadow Citadel Lord', hi: 'नेकलेस व भोली प्रहरी' },
+    summaryPoints: [
+      {
+        en: 'Ebright studied monarch butterflies; Matilda’s borrowed necklace was fake worth 500 francs; Bholi’s real name was Sulekha.',
+        hi: 'ईब्राइट के तितली प्रयोग; मटिल्डा का नकली हार (500 फ्रैंक); भोली का वास्तविक नाम सुलेखा था।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'Footprints Ch. 6–9 Complete Highlights', hi: 'फुटप्रिंट्स पाठ 6–9 सार' },
+        summary: {
+          en: 'Richard Ebright’s "The Travels of Monarch X", Maupassant’s twist in "The Necklace", Sulekha rejecting dowry, & Mother Goose stopping Think-Tank.',
+          hi: 'मटिल्डा ने नकली हार के बदले 10 साल कर्ज चुकाया; भोली ने लालची बिशंबर का विवाह ठुकराया।',
+        },
+        keyPoints: [
+          { en: 'Think-Tank ruler of Mars feared nursery rhyme "Humpty Dumpty".', hi: 'थिंक-टैंक नर्सरी कविता पुस्तक से डरकर पृथ्वी आक्रमण रद्द कर देता है।' },
+        ],
+      },
+    ],
+    questionIds: ['10-en-extra-3', '10-en-m-7', '10-en-m-11', '10-en-m-13'],
+    secondsPerQuestion: 10,
     baseXP: 155,
-    mapCoords: { x: 56, y: 64 },
+    mapCoords: { x: 70, y: 38 },
   },
   {
     id: '10-en-g1',
     grade: '10',
     subjectId: 'english',
     subsectionId: 'grammar-book',
-    order: 4,
+    order: 7,
     chapterCode: { en: 'Grammar Section · Determiners & Modals', hi: 'ग्रामर खंड · डिटरमिनर, मोडल, टेंस' },
     title: {
       en: 'Articles, Determiners, Modals & Tense Sequencing',
@@ -436,21 +608,21 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
           hi: 'some (सकारात्मक) बनाम any (नकारात्मक/प्रश्नवाचक), और दो भूतकाल कार्यों में पहले कार्य हेतु had + V3।',
         },
         keyPoints: [
-          { en: '"No sooner did he see... than he ran" (Always pair No sooner with "than", Hardly/Scarcely with "when").', hi: 'No sooner के साथ "than" तथा Hardly के साथ "when" लगता है।' },
+          { en: '"No sooner did he see... than he ran" (Always pair No sooner with "than", Hardly with "when").', hi: 'No sooner के साथ "than" तथा Hardly के साथ "when" लगता है।' },
         ],
       },
     ],
     questionIds: ['10-en-4', '10-en-7', '10-en-9', '10-en-tricky-1'],
-    secondsPerQuestion: 36,
+    secondsPerQuestion: 10,
     baseXP: 165,
-    mapCoords: { x: 74, y: 36 },
+    mapCoords: { x: 80, y: 60 },
   },
   {
     id: '10-en-g2',
     grade: '10',
     subjectId: 'english',
     subsectionId: 'grammar-book',
-    order: 5,
+    order: 8,
     chapterCode: { en: 'Grammar Section · Voice & Clauses', hi: 'ग्रामर खंड · वॉइस व क्लॉज़' },
     title: {
       en: 'Active-Passive Voice, Unless/If & Relative Clauses',
@@ -459,15 +631,15 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
     bossName: { en: 'Grammar Sphinx', hi: 'ग्रामर स्फिंक्स' },
     summaryPoints: [
       {
-        en: 'Simple Present → is/am/are + V3; "Unless" replaces "If ... not" cleanly without double negative.',
-        hi: 'Simple Present Passive में is/am/are + V3; "Unless" = "If not"।',
+        en: 'Simple Present → is/am/are + V3; Simple Past → was/were + V3; "Unless" replaces "If ... not".',
+        hi: 'Simple Present Passive में is/am/are + V3; Simple Past में was/were + V3; "Unless" = "If not"।',
       },
     ],
     studyNotes: [
       {
         topicTitle: { en: 'Transformation Playbook', hi: 'वाक्य रूपांतरण नियम (Voice & Clauses)' },
         summary: {
-          en: 'Relative pronouns: "who" for people (subject), "whom" (object), "whose" (possession), "which/that" for things.',
+          en: 'Relative pronouns: "who" for people (subject), "whose" (possession), "which/that" for things.',
           hi: 'व्यक्ति कर्ता के लिए "who", वस्तु के लिए "which", व "so...that" से "too...to" रूपांतरण।',
         },
         keyPoints: [
@@ -475,136 +647,202 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-en-10', '10-en-12', '10-en-15', '10-en-tricky-2'],
-    secondsPerQuestion: 34,
+    questionIds: ['10-en-10', '10-en-12', '10-en-15', '10-en-tricky-2', '10-en-m-8'],
+    secondsPerQuestion: 10,
     baseXP: 175,
-    mapCoords: { x: 86, y: 58 },
+    mapCoords: { x: 90, y: 40 },
   },
 
-  // ==================== CLASS 10 · MATHS (ALL 14 NEW NCERT CHAPTERS) ====================
+  // ==================== CLASS 10 · MATHS (8 STAGES COVERING ALL 14 CHAPTERS) ====================
   {
     id: '10-ma-1',
     grade: '10',
     subjectId: 'maths',
     subsectionId: 'maths-algebra',
     order: 1,
-    chapterCode: { en: 'NCERT Maths · Ch. 1 & 2', hi: 'NCERT गणित · अध्याय 1 व 2' },
+    chapterCode: { en: 'NCERT Maths · Ch. 1', hi: 'NCERT गणित · अध्याय 1' },
     title: {
-      en: 'Ch. 1 Real Numbers & Ch. 2 Polynomials',
-      hi: 'अध्याय 1: वास्तविक संख्याएँ एवं अध्याय 2: बहुपद',
+      en: 'Ch. 1: Real Numbers (Euclid, HCF×LCM & Irrationality)',
+      hi: 'अध्याय 1: वास्तविक संख्याएँ (HCF × LCM व अपरिमेयता)',
     },
     bossName: { en: 'Prime Factor Warden', hi: 'अभाज्य गुणनखंड रक्षक' },
     summaryPoints: [
       {
-        en: 'Fundamental Theorem of Arithmetic: HCF(a,b) × LCM(a,b) = a × b; √2, √3, √5 are irrational.',
-        hi: 'HCF(a,b) × LCM(a,b) = a × b; अपरिमेय संख्या सिद्ध करना।',
-      },
-      {
-        en: 'Quadratic polynomial zeroes: α + β = −b/a and αβ = c/a; number of zeroes = x-axis intersections.',
-        hi: 'शून्यकों का योग α + β = −b/a तथा गुणनफल αβ = c/a।',
+        en: 'Fundamental Theorem of Arithmetic: HCF(a,b) × LCM(a,b) = a × b; HCF(2, 4) = 2.',
+        hi: 'HCF(a,b) × LCM(a,b) = a × b; सबसे छोटी अभाज्य (2) व भाज्य (4) संख्या का HCF = 2।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: 'Ch. 1–2 Formulas & Board Theorems', hi: 'अध्याय 1–2 मुख्य सूत्र व प्रमेय' },
+        topicTitle: { en: 'Ch. 1 Key Theorems & Traps', hi: 'अध्याय 1 मुख्य सूत्र व प्रमेय' },
         summary: {
-          en: 'Degree of linear = 1, quadratic = 2, cubic = 3. If k divides p², prime p divides k.',
-          hi: 'द्विघात बहुपद x² − (α+β)x + αβ; ग्राफ़ x-अक्ष को जितनी बार काटे उतने शून्यक।',
+          en: '√2, √3, √5 are irrational. Every composite number factors uniquely as a product of primes.',
+          hi: 'अंकगणित की आधारभूत प्रमेय से प्रत्येक भाज्य संख्या अभाज्य गुणनफल के रूप में अद्वितीय होती है।',
         },
         keyPoints: [
           { en: 'HCF(6, 20) = 2, LCM(6, 20) = 60 → 2 × 60 = 6 × 20.', hi: 'सबसे छोटी अभाज्य संख्या 2 तथा सबसे छोटी भाज्य संख्या 4 का HCF = 2 होता है।' },
         ],
       },
     ],
-    questionIds: ['10-ma-1', '10-ma-2', '10-ma-13'],
-    secondsPerQuestion: 45,
-    baseXP: 125,
+    questionIds: ['10-ma-1', '10-ma-13', '10-ma-m-12', '10-ma-m-14'],
+    secondsPerQuestion: 10,
+    baseXP: 120,
     mapCoords: { x: 14, y: 66 },
+  },
+  {
+    id: '10-ma-poly',
+    grade: '10',
+    subjectId: 'maths',
+    subsectionId: 'maths-algebra',
+    order: 2,
+    chapterCode: { en: 'NCERT Maths · Ch. 2', hi: 'NCERT गणित · अध्याय 2' },
+    title: {
+      en: 'Ch. 2: Polynomials (Zeroes, Coefficients & Graphs)',
+      hi: 'अध्याय 2: बहुपद (शून्यक, गुणांक संबंध व ग्राफ़)',
+    },
+    bossName: { en: 'Parabola Zero Keeper', hi: 'बहुपद शून्यक प्रहरी' },
+    summaryPoints: [
+      {
+        en: 'Quadratic zeroes: α + β = −b/a and αβ = c/a; number of zeroes = x-axis intersections.',
+        hi: 'शून्यकों का योग α + β = −b/a तथा गुणनफल αβ = c/a; ग्राफ़ x-अक्ष को जितनी बार काटे उतने शून्यक।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'Ch. 2 Polynomial Formulas', hi: 'अध्याय 2 बहुपद सूत्र' },
+        summary: {
+          en: 'Form quadratic polynomial as k[x² − (α+β)x + αβ]. Degree of linear = 1, quadratic = 2, cubic = 3.',
+          hi: 'द्विघात बहुपद x² − (α+β)x + αβ; x-अक्ष प्रतिच्छेद बिंदु = वास्तविक शून्यकों की संख्या।',
+        },
+        keyPoints: [
+          { en: 'For x² − 5x + 6: α + β = 5 and αβ = 6.', hi: 'x² − 5x + 6 के लिए योग = 5 व गुणनफल = 6।' },
+        ],
+      },
+    ],
+    questionIds: ['10-ma-2', '10-ma-m-1', '10-ma-m-2', '10-ma-m-15'],
+    secondsPerQuestion: 10,
+    baseXP: 125,
+    mapCoords: { x: 24, y: 44 },
   },
   {
     id: '10-ma-2',
     grade: '10',
     subjectId: 'maths',
     subsectionId: 'maths-algebra',
-    order: 2,
-    chapterCode: { en: 'NCERT Maths · Ch. 3, 4 & 5', hi: 'NCERT गणित · अध्याय 3, 4 व 5' },
+    order: 3,
+    chapterCode: { en: 'NCERT Maths · Ch. 3 & 4', hi: 'NCERT गणित · अध्याय 3 व 4' },
     title: {
-      en: 'Ch. 3 Linear Equations, Ch. 4 Quadratics & Ch. 5 Arithmetic Progressions',
-      hi: 'अध्याय 3: दो चर रैखिक, 4: द्विघात समीकरण व 5: समांतर श्रेढ़ियाँ',
+      en: 'Ch. 3 Linear Equations & Ch. 4 Quadratic Equations',
+      hi: 'अध्याय 3: दो चर रैखिक समीकरण व अध्याय 4: द्विघात समीकरण',
     },
     bossName: { en: 'Algebra Forge Golem', hi: 'बीजगणित महाबली' },
     summaryPoints: [
       {
-        en: 'a₁/a₂ ≠ b₁/b₂ (Unique/Intersecting); a₁/a₂ = b₁/b₂ ≠ c₁/c₂ (Parallel/No Solution); all equal (Coincident).',
+        en: 'a₁/a₂ ≠ b₁/b₂ (Unique); a₁/a₂ = b₁/b₂ ≠ c₁/c₂ (Parallel/No Solution); all equal (Coincident).',
         hi: 'प्रतिच्छेदी (अद्वितीय हल), समांतर (कोई हल नहीं) व संपाती (अनंत हल) की शर्तें।',
       },
       {
-        en: 'Quadratic Discriminant D = b² − 4ac; AP nth term aₙ = a + (n−1)d, Sₙ = (n/2)[2a + (n−1)d].',
-        hi: 'विविक्तकर D = b² − 4ac; AP का nवाँ पद aₙ = a + (n−1)d।',
+        en: 'Quadratic Discriminant D = b² − 4ac: D = 0 yields two equal real roots.',
+        hi: 'विविक्तकर D = b² − 4ac = 0 होने पर दो बराबर वास्तविक मूल होते हैं।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: 'Ch. 3, 4 & 5 Key Identities', hi: 'अध्याय 3, 4 व 5 के बोर्ड सूत्र' },
+        topicTitle: { en: 'Ch. 3 & 4 Consistency & Discriminant', hi: 'अध्याय 3 व 4 समीकरण शर्तें' },
         summary: {
-          en: 'D > 0 gives 2 distinct real roots, D = 0 gives 2 equal real roots, D < 0 gives no real roots.',
-          hi: 'D = 0 होने पर दो बराबर वास्तविक मूल (−b/2a, −b/2a) मिलते हैं।',
+          en: 'D > 0 gives 2 distinct real roots, D = 0 gives equal real roots, D < 0 gives no real roots.',
+          hi: 'Sridharacharya formula: x = [−b ± √(b² − 4ac)] / 2a।',
         },
         keyPoints: [
-          { en: 'Quadratic Formula (Sridharacharya): x = [−b ± √(b² − 4ac)] / 2a.', hi: 'Sₙ − Sₙ₋₁ = aₙ का उपयोग किसी AP का nवाँ पद निकालने में होता है।' },
+          { en: 'Parallel lines condition: a₁/a₂ = b₁/b₂ ≠ c₁/c₂.', hi: 'समांतर रेखाएँ (कोई हल नहीं): a₁/a₂ = b₁/b₂ ≠ c₁/c₂।' },
         ],
       },
     ],
-    questionIds: ['10-ma-8', '10-ma-3', '10-ma-4'],
-    secondsPerQuestion: 42,
+    questionIds: ['10-ma-8', '10-ma-3', '10-ma-m-3', '10-ma-m-9'],
+    secondsPerQuestion: 10,
+    baseXP: 135,
+    mapCoords: { x: 36, y: 66 },
+  },
+  {
+    id: '10-ma-ap',
+    grade: '10',
+    subjectId: 'maths',
+    subsectionId: 'maths-algebra',
+    order: 4,
+    chapterCode: { en: 'NCERT Maths · Ch. 5', hi: 'NCERT गणित · अध्याय 5' },
+    title: {
+      en: 'Ch. 5: Arithmetic Progressions (nth Term & Sum Sₙ)',
+      hi: 'अध्याय 5: समांतर श्रेढ़ियाँ (nवाँ पद व योगफल Sₙ)',
+    },
+    bossName: { en: 'Sequence Progression Warden', hi: 'समांतर श्रेढ़ी प्रहरी' },
+    summaryPoints: [
+      {
+        en: 'AP nth term: aₙ = a + (n−1)d; Sum of n terms: Sₙ = (n/2)[2a + (n−1)d] = (n/2)(a + l).',
+        hi: 'AP का nवाँ पद aₙ = a + (n−1)d; प्रथम n पदों का योग Sₙ = (n/2)[2a + (n−1)d]।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'Ch. 5 AP Key Formulas', hi: 'अध्याय 5 AP सूत्र' },
+        summary: {
+          en: 'Common difference d = a₂ − a₁; Sum of first n positive integers = n(n+1)/2.',
+          hi: 'प्रथम n प्राकृत संख्याओं का योग n(n+1)/2 होता है।',
+        },
+        keyPoints: [
+          { en: 'Sₙ − Sₙ₋₁ = aₙ retrieves the nth term directly from the sum formula.', hi: 'S₁₀ = 10 × 11 / 2 = 55।' },
+        ],
+      },
+    ],
+    questionIds: ['10-ma-4', '10-ma-m-4', '10-ma-m-13', '10-ma-m-16'],
+    secondsPerQuestion: 10,
     baseXP: 140,
-    mapCoords: { x: 34, y: 40 },
+    mapCoords: { x: 48, y: 38 },
   },
   {
     id: '10-ma-3',
     grade: '10',
     subjectId: 'maths',
     subsectionId: 'maths-geometry-trig',
-    order: 3,
-    chapterCode: { en: 'NCERT Maths · Ch. 6, 7 & 10', hi: 'NCERT गणित · अध्याय 6, 7 व 10' },
+    order: 5,
+    chapterCode: { en: 'NCERT Maths · Ch. 6 & 7', hi: 'NCERT गणित · अध्याय 6 व 7' },
     title: {
-      en: 'Ch. 6 Triangles, Ch. 7 Coordinate Geometry & Ch. 10 Circles',
-      hi: 'अध्याय 6: त्रिभुज, अध्याय 7: निर्देशांक ज्यामिति व अध्याय 10: वृत्त',
+      en: 'Ch. 6 Similar Triangles (BPT) & Ch. 7 Coordinate Geometry',
+      hi: 'अध्याय 6: त्रिभुज (थेल्स प्रमेय) व अध्याय 7: निर्देशांक ज्यामिति',
     },
-    bossName: { en: 'Tangent Sentinel', hi: 'स्पर्शरेखा व प्रमेय प्रहरी' },
+    bossName: { en: 'Coordinate Thales Warden', hi: 'थेल्स व निर्देशांक रक्षक' },
     summaryPoints: [
       {
         en: 'Thales Theorem (BPT): Line parallel to one side divides the other two in equal ratio (AD/DB = AE/EC).',
         hi: 'थेल्स प्रमेय (BPT): त्रिभुज की एक भुजा के समांतर रेखा अन्य दोनों भुजाओं को समान अनुपात में बाँटती है।',
       },
       {
-        en: 'Distance = √[(x₂−x₁)² + (y₂−y₁)²]; Tangents from external point are equal (Theorem 10.2) & ⊥ to radius.',
-        hi: 'दूरी सूत्र, मध्यबिंदु सूत्र, तथा बाह्य बिंदु से वृत्त पर खींची गई दोनों स्पर्श रेखाएँ बराबर होती हैं।',
+        en: 'Distance = √[(x₂−x₁)² + (y₂−y₁)²]; From origin O(0,0): √(x² + y²); Midpoint = ((x₁+x₂)/2, (y₁+y₂)/2).',
+        hi: 'मूल बिंदु से दूरी √(x² + y²); मध्यबिंदु = ((x₁+x₂)/2, (y₁+y₂)/2)।',
       },
     ],
     studyNotes: [
       {
-        topicTitle: { en: 'Ch. 6, 7 & 10 Theorems & Section Formula', hi: 'अध्याय 6, 7 व 10 प्रमेय एवं विभाजन सूत्र' },
+        topicTitle: { en: 'Ch. 6 & 7 Theorems & Section Formula', hi: 'अध्याय 6 व 7 प्रमेय एवं विभाजन सूत्र' },
         summary: {
           en: 'All circles are similar; all squares are similar; Section formula: ((m₁x₂+m₂x₁)/(m₁+m₂), (m₁y₂+m₂y₁)/(m₁+m₂)).',
-          hi: 'सभी वृत्त व वर्ग समरूप होते हैं। मध्यबिंदु = ((x₁+x₂)/2, (y₁+y₂)/2)।',
+          hi: 'सभी वृत्त व वर्ग समरूप होते हैं; थेल्स प्रमेय पर आधारित 4-नंबर प्रश्न बोर्ड में आते हैं।',
         },
         keyPoints: [
-          { en: 'From an interior point, 0 tangents can be drawn; from a point on the circle, 1; from outside, 2.', hi: 'वृत्त के अंदर स्थित बिंदु से 0, परिधि पर स्थित बिंदु से 1, व बाह्य बिंदु से 2 स्पर्श रेखाएँ।' },
+          { en: 'Distance of P(3, 4) from origin = √(3² + 4²) = 5.', hi: 'बिंदु P(3, 4) की मूल बिंदु से दूरी = 5 इकाई।' },
         ],
       },
     ],
-    questionIds: ['10-ma-5', '10-ma-6', '10-ma-14'],
-    secondsPerQuestion: 40,
-    baseXP: 155,
-    mapCoords: { x: 54, y: 64 },
+    questionIds: ['10-ma-5', '10-ma-m-5', '10-ma-m-11', '10-ma-tricky-1'],
+    secondsPerQuestion: 10,
+    baseXP: 150,
+    mapCoords: { x: 60, y: 64 },
   },
   {
     id: '10-ma-4',
     grade: '10',
     subjectId: 'maths',
     subsectionId: 'maths-geometry-trig',
-    order: 4,
+    order: 6,
     chapterCode: { en: 'NCERT Maths · Ch. 8 & 9', hi: 'NCERT गणित · अध्याय 8 व 9' },
     title: {
       en: 'Ch. 8 Intro to Trigonometry & Ch. 9 Heights & Distances',
@@ -617,8 +855,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         hi: 'सर्वसमिकाएँ: sin²θ + cos²θ = 1, sec²θ − tan²θ = 1, cosec²θ − cot²θ = 1।',
       },
       {
-        en: 'Angle of Elevation = Angle of Depression (alternate interior angles); sin 30° = ½, tan 45° = 1, tan 60° = √3.',
-        hi: 'उन्नयन कोण = अवनमन कोण; sin 30° = ½, cos 60° = ½, tan 45° = 1।',
+        en: 'Angle of Elevation = Angle of Depression; if height = shadow length, Sun elevation = 45°.',
+        hi: 'उन्नयन कोण = अवनमन कोण; ऊँचाई और छाया बराबर होने पर कोण = 45°।',
       },
     ],
     studyNotes: [
@@ -626,45 +864,80 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         topicTitle: { en: 'Trig Table & Ch. 9 Applications', hi: 'त्रिकोणमितीय सारणी व ऊँचाई-दूरी नियम' },
         summary: {
           en: 'Memorize standard values (0°, 30°, 45°, 60°, 90°). Remember 9(sec²A − tan²A) = 9(1) = 9.',
-          hi: '9 sec²A − 9 tan²A = 9; छाया और मीनार की लंबाई बराबर होने पर सूर्य का उन्नयन कोण 45° होता है।',
+          hi: '9 sec²A − 9 tan²A = 9; sin 30° = ½, tan 45° = 1, tan 60° = √3।',
         },
         keyPoints: [
           { en: 'tan θ = sin θ / cos θ; sec θ = 1 / cos θ; tan 90° is undefined.', hi: 'tan 45° = 1, cot 45° = 1, sin 60° = √3/2।' },
         ],
       },
     ],
-    questionIds: ['10-ma-7', '10-ma-9', '10-ma-15', '10-ma-tricky-1'],
-    secondsPerQuestion: 36,
+    questionIds: ['10-ma-7', '10-ma-9', '10-ma-15', '10-ma-m-6'],
+    secondsPerQuestion: 10,
+    baseXP: 160,
+    mapCoords: { x: 70, y: 38 },
+  },
+  {
+    id: '10-ma-circles',
+    grade: '10',
+    subjectId: 'maths',
+    subsectionId: 'maths-mensuration-stats',
+    order: 7,
+    chapterCode: { en: 'NCERT Maths · Ch. 10 & 11', hi: 'NCERT गणित · अध्याय 10 व 11' },
+    title: {
+      en: 'Ch. 10 Circles (Tangents) & Ch. 11 Areas Related to Circles',
+      hi: 'अध्याय 10: वृत्त (स्पर्श रेखाएँ) व अध्याय 11: वृत्तों से संबंधित क्षेत्रफल',
+    },
+    bossName: { en: 'Tangent Arc Sentinel', hi: 'स्पर्शरेखा व त्रिज्यखंड प्रहरी' },
+    summaryPoints: [
+      {
+        en: 'Tangents from external point are equal (Theorem 10.2) & ⊥ to radius; at most 2 parallel tangents to a circle.',
+        hi: 'बाह्य बिंदु से दोनों स्पर्श रेखाएँ बराबर व त्रिज्या पर लंब होती हैं; अधिकतम 2 समांतर स्पर्श रेखाएँ संभव।',
+      },
+      {
+        en: 'Sector area = (θ/360)πr², Arc length = (θ/360)2πr.',
+        hi: 'त्रिज्यखंड क्षेत्रफल (θ/360)πr² व चाप लंबाई (θ/360)2πr।',
+      },
+    ],
+    studyNotes: [
+      {
+        topicTitle: { en: 'Ch. 10–11 Tangents & Sector Areas', hi: 'अध्याय 10–11 प्रमेय व सूत्र' },
+        summary: {
+          en: 'From an interior point, 0 tangents; on circle, 1; from outside, 2 tangents can be drawn.',
+          hi: 'वृत्त को 2 बिंदुओं पर काटने वाली रेखा "छेदक रेखा (Secant)" कहलाती है।',
+        },
+        keyPoints: [
+          { en: 'Tangent touches circle at exactly 1 point (Point of Contact).', hi: 'स्पर्श बिंदु पर स्पर्श रेखा त्रिज्या के साथ 90° कोण बनाती है।' },
+        ],
+      },
+    ],
+    questionIds: ['10-ma-6', '10-ma-14', '10-ma-12', '10-ma-m-7'],
+    secondsPerQuestion: 10,
     baseXP: 165,
-    mapCoords: { x: 72, y: 36 },
+    mapCoords: { x: 80, y: 60 },
   },
   {
     id: '10-ma-5',
     grade: '10',
     subjectId: 'maths',
     subsectionId: 'maths-mensuration-stats',
-    order: 5,
-    chapterCode: { en: 'NCERT Maths · Ch. 11–14', hi: 'NCERT गणित · अध्याय 11–14' },
+    order: 8,
+    chapterCode: { en: 'NCERT Maths · Ch. 12–14', hi: 'NCERT गणित · अध्याय 12–14' },
     title: {
-      en: 'Ch. 11 Sector Areas, Ch. 12 Volumes, Ch. 13 Statistics & Ch. 14 Probability',
-      hi: 'अध्याय 11: त्रिज्यखंड, 12: आयतन, 13: सांख्यिकी व 14: प्रायिकता',
+      en: 'Ch. 12 Volumes, Ch. 13 Statistics & Ch. 14 Probability',
+      hi: 'अध्याय 12: आयतन, 13: सांख्यिकी व 14: प्रायिकता',
     },
     bossName: { en: 'Oracle of Chance', hi: 'सांख्यिकी व प्रायिकता सम्राट' },
     summaryPoints: [
       {
-        en: 'Sector area = (θ/360)πr², Arc length = (θ/360)2πr; Cylinder V = πr²h, Cone V = ⅓πr²h, Sphere V = 4/3πr³.',
-        hi: 'त्रिज्यखंड क्षेत्रफल (θ/360)πr²; शंकु आयतन = ⅓πr²h; बेलन आयतन = πr²h।',
-      },
-      {
-        en: 'Empirical Rule: 3 Median = Mode + 2 Mean; Sure event P = 1, Impossible event P = 0, 0 ≤ P(E) ≤ 1.',
-        hi: 'बहुलक = 3 माध्यिका − 2 माध्य; निश्चित घटना की प्रायिकता = 1, असंभव घटना = 0।',
+        en: 'Cylinder V = πr²h, Cone V = ⅓πr²h, Hemisphere TSA = 3πr²; Empirical Rule: Mode = 3 Median − 2 Mean.',
+        hi: 'ठोस अर्धगोला TSA = 3πr²; बहुलक = 3 माध्यिका − 2 माध्य; निश्चित घटना P=1, असंभव=0।',
       },
     ],
     studyNotes: [
       {
         topicTitle: { en: 'Mensuration, Statistics & Probability Summary', hi: 'क्षेत्रमिति, सांख्यिकी व प्रायिकता सूत्र' },
         summary: {
-          en: 'Total surface area of hemisphere = 3πr² (curved = 2πr²). P(E) + P(not E) = 1 always.',
+          en: 'P(E) + P(not E) = 1 always; Probability can never be negative or > 1.',
           hi: 'ठोस अर्धगोले का संपूर्ण पृष्ठीय क्षेत्रफल 3πr² व वक्र पृष्ठ 2πr² होता है।',
         },
         keyPoints: [
@@ -672,13 +945,13 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ma-12', '10-ma-11', '10-ma-10', '10-ma-tricky-2'],
-    secondsPerQuestion: 34,
+    questionIds: ['10-ma-10', '10-ma-11', '10-ma-m-8', '10-ma-m-10', '10-ma-tricky-2'],
+    secondsPerQuestion: 10,
     baseXP: 175,
-    mapCoords: { x: 86, y: 58 },
+    mapCoords: { x: 90, y: 40 },
   },
 
-  // ==================== CLASS 10 · PHYSICS (SCIENCE CH. 9–12) ====================
+  // ==================== CLASS 10 · PHYSICS (5 STAGES COVERING SCIENCE CH. 9–12) ====================
   {
     id: '10-ph-1',
     grade: '10',
@@ -698,7 +971,7 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
       {
         topicTitle: { en: 'Concave vs Convex Mirror Uses & Sign Convention', hi: 'अवतल बनाम उत्तल दर्पण उपयोग व चिह्न परिपाटी' },
         summary: {
-          en: 'Concave mirrors form real/inverted images (except between P & F) used in torches, headlights, dentists. Convex gives wide erect rear-view.',
+          en: 'Concave mirrors form magnified erect images between P & F (used by dentists, shaving, headlights); Convex gives wide erect rear-view.',
           hi: 'दाढ़ी बनाने/दंत चिकित्सक/सौर भट्टी में अवतल दर्पण; वाहनों के साइड मिरर में उत्तल दर्पण।',
         },
         keyPoints: [
@@ -706,8 +979,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ph-2', '10-ph-5', '10-ph-13'],
-    secondsPerQuestion: 45,
+    questionIds: ['10-ph-2', '10-ph-5', '10-ph-13', '10-ph-m-1'],
+    secondsPerQuestion: 10,
     baseXP: 125,
     mapCoords: { x: 14, y: 66 },
   },
@@ -734,12 +1007,12 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
           hi: 'निर्वात में प्रकाश की चाल 3 × 10⁸ m/s; हीरे का अपवर्तनांक सर्वाधिक (2.42) होता है।',
         },
         keyPoints: [
-          { en: 'Lens of f = +50 cm = +0.5 m has Power P = +2 D (Convex).', hi: 'फोकस दूरी 2 मीटर वाले अवतल लेंस की क्षमता −0.5 D होगी।' },
+          { en: 'Lens of f = +50 cm = +0.5 m has Power P = +2.0 D (Convex).', hi: 'फोकस दूरी 2 मीटर वाले अवतल लेंस की क्षमता −0.5 D होगी।' },
         ],
       },
     ],
-    questionIds: ['10-ph-1', '10-ph-12', '10-ph-14'],
-    secondsPerQuestion: 42,
+    questionIds: ['10-ph-1', '10-ph-12', '10-ph-14', '10-ph-m-2'],
+    secondsPerQuestion: 10,
     baseXP: 140,
     mapCoords: { x: 34, y: 40 },
   },
@@ -770,8 +1043,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ph-3', '10-ph-8', '10-ph-10'],
-    secondsPerQuestion: 40,
+    questionIds: ['10-ph-3', '10-ph-8', '10-ph-10', '10-ph-m-3'],
+    secondsPerQuestion: 10,
     baseXP: 150,
     mapCoords: { x: 54, y: 64 },
   },
@@ -803,7 +1076,7 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
       },
     ],
     questionIds: ['10-ph-7', '10-ph-4', '10-ph-9', '10-ph-tricky-1'],
-    secondsPerQuestion: 36,
+    secondsPerQuestion: 10,
     baseXP: 165,
     mapCoords: { x: 72, y: 36 },
   },
@@ -835,12 +1108,12 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
       },
     ],
     questionIds: ['10-ph-6', '10-ph-11', '10-ph-15', '10-ph-tricky-2'],
-    secondsPerQuestion: 34,
+    secondsPerQuestion: 10,
     baseXP: 175,
     mapCoords: { x: 86, y: 58 },
   },
 
-  // ==================== CLASS 10 · CHEMISTRY (SCIENCE CH. 1–4) ====================
+  // ==================== CLASS 10 · CHEMISTRY (5 STAGES COVERING SCIENCE CH. 1–4) ====================
   {
     id: '10-ch-1',
     grade: '10',
@@ -860,7 +1133,7 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
       {
         topicTitle: { en: '5 Reaction Types & Redox Rules', hi: '5 अभिक्रिया प्रकार व रेडॉक्स नियम' },
         summary: {
-          en: 'Combination, Decomposition (thermal/electrolytic/photochemical AgBr in B&W photography), Displacement, Double Displacement (BaSO₄ white ppt), Redox.',
+          en: 'Combination, Decomposition (AgBr in B&W photography), Displacement, Double Displacement (BaSO₄ white ppt), Redox.',
           hi: 'संयोजन, वियोजन (AgBr सूर्यप्रकाश में श्वेत-श्याम फोटोग्राफी), विस्थापन, द्विविस्थापन व उपचयन-अपचयन।',
         },
         keyPoints: [
@@ -868,8 +1141,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ch-2', '10-ch-13', '10-ch-10'],
-    secondsPerQuestion: 45,
+    questionIds: ['10-ch-2', '10-ch-13', '10-ch-10', '10-ch-m-1'],
+    secondsPerQuestion: 10,
     baseXP: 125,
     mapCoords: { x: 14, y: 66 },
   },
@@ -896,12 +1169,12 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
           hi: 'दंत-क्षय pH 5.5 से कम पर; सिरका = ऐसीटिक अम्ल; इमली = टार्टरिक; दही = लैक्टिक; टमाटर = ऑक्सैलिक।',
         },
         keyPoints: [
-          { en: 'Always add acid slowly to water (never water to conc. acid) because dilution is highly exothermic.', hi: 'तनुकरण ऊष्माक्षेपी होने से अम्ल को धीरे-धीरे जल में मिलाते हैं।' },
+          { en: 'Always add acid slowly to water because dilution is highly exothermic.', hi: 'तनुकरण ऊष्माक्षेपी होने से अम्ल को धीरे-धीरे जल में मिलाते हैं।' },
         ],
       },
     ],
-    questionIds: ['10-ch-1', '10-ch-6', '10-ch-14'],
-    secondsPerQuestion: 42,
+    questionIds: ['10-ch-1', '10-ch-6', '10-ch-14', '10-ch-m-2', '10-ch-tricky-2'],
+    secondsPerQuestion: 10,
     baseXP: 140,
     mapCoords: { x: 34, y: 40 },
   },
@@ -924,7 +1197,7 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
       {
         topicTitle: { en: '4 Essential Board Salts & Equations', hi: 'चार प्रमुख लवण व निर्माण समीकरण' },
         summary: {
-          en: 'Heating Gypsum (CaSO₄·2H₂O) at 373 K yields POP; Chlor-alkali electrolysis of brine gives NaOH + Cl₂ (anode) + H₂ (cathode).',
+          en: 'Heating Gypsum (CaSO₄·2H₂O) at 373 K yields POP; Chlor-alkali electrolysis of brine gives NaOH + Cl₂ + H₂.',
           hi: 'जिप्सम को 373 K पर गर्म करने से प्लास्टर ऑफ पेरिस बनता है।',
         },
         keyPoints: [
@@ -932,8 +1205,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ch-3', '10-ch-7', '10-ch-15'],
-    secondsPerQuestion: 40,
+    questionIds: ['10-ch-3', '10-ch-7', '10-ch-15', '10-ch-m-4'],
+    secondsPerQuestion: 10,
     baseXP: 150,
     mapCoords: { x: 54, y: 64 },
   },
@@ -964,8 +1237,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ch-4', '10-ch-8', '10-ch-11', '10-ch-tricky-1'],
-    secondsPerQuestion: 36,
+    questionIds: ['10-ch-4', '10-ch-8', '10-ch-11', '10-ch-m-3'],
+    secondsPerQuestion: 10,
     baseXP: 165,
     mapCoords: { x: 72, y: 36 },
   },
@@ -996,8 +1269,8 @@ export const SYLLABUS_NODES_10: ChapterNodeDefinition[] = [
         ],
       },
     ],
-    questionIds: ['10-ch-5', '10-ch-9', '10-ch-12', '10-ch-tricky-2'],
-    secondsPerQuestion: 34,
+    questionIds: ['10-ch-5', '10-ch-9', '10-ch-12', '10-ch-tricky-1'],
+    secondsPerQuestion: 10,
     baseXP: 175,
     mapCoords: { x: 86, y: 58 },
   },
